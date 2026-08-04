@@ -1,0 +1,14 @@
+profile: safe
+threads: 5
+timeout: 15
+delay: 1.0
+rate_limit: 20
+passive_only: true
+aggressive: false
+stealth: false
+randomize_order: false
+modules_blacklist:
+  - ports
+  - waf
+  - ids
+  - dirs

@@ -1,0 +1,72 @@
+# WebOSINT Pro - systemd unit
+#
+# Installed by scripts/install-service.sh, which substitutes the __PLACEHOLDER__
+# values below. Runs as the invoking user, never as root.
+#
+#   sudo systemctl enable webosint     start at boot
+#   sudo systemctl start webosint
+#   sudo systemctl status webosint
+#   sudo systemctl restart webosint
+#   sudo systemctl stop webosint
+#
+# Note: the service runs in the foreground here. systemd supervises the
+# process, so do NOT pass a backgrounding flag in ExecStart.
+
+[Unit]
+Description=WebOSINT Pro - Attack Surface Management platform
+Documentation=file://__WORKDIR__/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__WORKDIR__
+Environment=PYTHONUNBUFFERED=1
+# HOME must be set explicitly: without it Python falls back to the process
+# working directory and the runtime dir lands somewhere unexpected.
+Environment=HOME=__HOME__
+Environment=WEBOSINT_RUNTIME_DIR=__RUNTIME_DIR__
+ExecStart=__PYTHON__ __WORKDIR__/webserve.py __ARGS__
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart automatically after a crash, with a backoff so a crash loop does not
+# saturate the machine.
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# Graceful shutdown: SIGTERM, then SIGKILL after the grace period.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Hardening. The service only needs to write its own reports, logs and runtime
+# state.
+#
+# ProtectHome is deliberately NOT set to read-only: the project is normally
+# installed under the operator's home directory, and a read-only /home makes
+# both the working directory and the runtime dir unwritable, which fails at
+# startup with status=226/NAMESPACE. ProtectSystem=full still protects /usr,
+# /boot and /etc, and ReadWritePaths is scoped to just what the service writes.
+#
+# Every path in ReadWritePaths must already exist or systemd cannot construct
+# the mount namespace; install-service.sh creates them before installing.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=no
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=__WORKDIR__/reports __WORKDIR__/logs __RUNTIME_DIR__
+
+# Log rotation is handled by journald; the application also rotates its own
+# file log at 10 MB with five backups.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webosint
+
+[Install]
+WantedBy=multi-user.target

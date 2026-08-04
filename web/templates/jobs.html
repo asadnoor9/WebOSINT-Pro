@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All scans - WebOSINT Pro</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+ :root{--bg:#0f1419;--panel:#171d24;--line:#2a333d;--fg:#e6edf3;--dim:#8b98a5;
+       --accent:#3fb950;--warn:#d29922;--danger:#f85149;}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);
+      font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+ .wrap{max-width:980px;margin:0 auto;padding:32px 20px 64px}
+ a{color:var(--accent)}
+ h1{margin:0 0 4px;font-size:20px}
+ .sub{color:var(--dim);margin:0 0 22px}
+ .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+ table{width:100%;border-collapse:collapse;font-size:13px}
+ th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line)}
+ th{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+ .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
+ .running{background:rgba(210,153,34,.15);color:var(--warn)}
+ .done{background:rgba(63,185,80,.15);color:var(--accent)}
+ .failed,.cancelled{background:rgba(248,81,73,.15);color:var(--danger)}
+ .queued{background:rgba(139,152,165,.15);color:var(--dim)}
+ .muted{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub"><a href="/">&larr; New scan</a></p>
+  <h1>All scans</h1>
+  <p class="sub">Background jobs from this server session. Restarting the server clears the list.</p>
+
+  <div class="card">
+    {% if jobs %}
+    <table>
+      <thead><tr><th>Target</th><th>Mode</th><th>Speed</th><th>Status</th>
+        <th>Findings</th><th>Started</th><th>Finished</th></tr></thead>
+      <tbody>
+        {% for j in jobs %}
+        <tr>
+          <td><a href="/scan/{{ j.id }}">{{ j.target }}</a></td>
+          <td>{{ j.mode }}</td>
+          <td>{{ j.speed }}</td>
+          <td><span class="pill {{ j.status }}">{{ j.status }}</span></td>
+          <td>{{ j.summary.get('total_findings', '-') }}</td>
+          <td>{{ j.started }}</td>
+          <td>{{ j.finished or '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted" style="margin:0">No scans yet. <a href="/">Start one</a>.</p>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

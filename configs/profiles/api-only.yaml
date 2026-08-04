@@ -1,0 +1,14 @@
+profile: api-only
+threads: 10
+timeout: 10
+delay: 0.2
+rate_limit: 60
+passive_only: false
+aggressive: false
+stealth: false
+randomize_order: false
+modules:
+  - http
+  - ssl
+  - api
+  - javascript

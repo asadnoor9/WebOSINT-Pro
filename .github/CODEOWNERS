@@ -1,0 +1,20 @@
+# Code owners are requested for review automatically on every pull request.
+# See https://docs.github.com/articles/about-code-owners
+
+# Default owner for everything in the repository.
+*                       @asadnoor9
+
+# Safety-critical code. Changes here can turn an authorized passive scan into
+# an unauthorized active one, so they always need an explicit review.
+/core/safety.py         @asadnoor9
+/core/scope.py          @asadnoor9
+/core/safe_exec.py      @asadnoor9
+/core/redaction.py      @asadnoor9
+/core/redact.py         @asadnoor9
+/privacy/              @asadnoor9
+
+# Supply chain and release surface.
+/pyproject.toml         @asadnoor9
+/.github/workflows/     @asadnoor9
+/.github/dependabot.yml @asadnoor9
+/SECURITY.md            @asadnoor9

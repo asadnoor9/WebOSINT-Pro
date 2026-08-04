@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WebOSINT Pro
+#
+# Nothing produced by a scan belongs in version control. Reports, logs and
+# caches all land under output/, so that whole tree is ignored.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Generated output ─────────────────────────────────────────────────────────
+output/
+!output/**/.gitkeep
+logs/
+cache/
+reports/
+results/
+scans/
+*.log
+*.jsonl
+
+# ── Local configuration and secrets ──────────────────────────────────────────
+# config.example.json is tracked; the real config never is.
+config.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+credentials.json
+secrets.json
+allowlist.txt
+scope.txt
+
+# ── Runtime state ────────────────────────────────────────────────────────────
+.runtime/
+*.pid
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+*.so
+build/
+dist/
+sdist/
+wheels/
+*.egg
+*.egg-info/
+.eggs/
+.installed.cfg
+MANIFEST
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ── Test, coverage and type-checking artifacts ───────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+.pytype/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+report.xml
+
+# ── Editors and IDEs ─────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+.claude/
+
+# ── Operating system ─────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ── Archives and scratch files ───────────────────────────────────────────────
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+*.orig
+*.rej
+*.tmp
+tmp/
+scratch/

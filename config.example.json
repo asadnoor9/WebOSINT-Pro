@@ -1,0 +1,10 @@
+{
+  "_comment": "WebOSINT Pro configuration template. Copy to config.json and edit; config.json is git-ignored so local values are never committed. API keys are read from the environment first (WEBOSINT_SHODAN_KEY, WEBOSINT_NVD_KEY).",
+  "shodan_key": "",
+  "nvd_key": "",
+  "threads": 10,
+  "timeout": 10,
+  "rate_limit": 50,
+  "retries": 2,
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+}

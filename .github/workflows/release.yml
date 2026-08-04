@@ -1,0 +1,89 @@
+name: Release
+
+# Tag a commit as vX.Y.Z and this publishes the GitHub Release with built
+# distributions attached.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify tag against project version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # A tag that disagrees with pyproject.toml produces a release nobody can
+      # reproduce, so fail before anything is published.
+      - name: Compare tag with pyproject version
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION=$(python -c "import tomllib,pathlib;print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          echo "tag=$TAG project=$VERSION"
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Tag $TAG does not match project version $VERSION."
+            exit 1
+          fi
+
+      - name: Require a changelog entry
+        run: |
+          VERSION="${{ github.ref_name }}"
+          if ! grep -q "${VERSION#v}" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for ${VERSION#v}."
+            exit 1
+          fi
+
+  build:
+    name: Build distributions
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build and check
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to create the release and upload assets.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}

@@ -1,0 +1,47 @@
+# Run: pre-commit install
+# Manual full pass: pre-commit run --all-files
+
+default_language_version:
+  python: python3
+
+exclude: |
+  (?x)^(
+    venv/|
+    \.venv/|
+    node_modules/|
+    reports/|
+    logs/|
+    wordlists/
+  )
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: detect-private-key
+      - id: check-executables-have-shebangs
+      - id: debug-statements
+      - id: forbid-new-submodules
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
