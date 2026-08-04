@@ -1,393 +1,585 @@
 # WebOSINT Pro
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10+-blue.svg">
-  <img src="https://img.shields.io/badge/Platform-Linux-success.svg">
-  <img src="https://img.shields.io/badge/License-MIT-red.svg">
-  <img src="https://img.shields.io/badge/Status-Active-success.svg">
-</p>
+Passive-first web OSINT and reconnaissance framework for **authorized** security testing.
 
-<p align="center">
-  Advanced Web Application OSINT & Reconnaissance Framework for Bug Bounty Hunters, Penetration Testers, and Red Teamers.
-</p>
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 
 ---
 
-# Overview
+## Authorized use only
 
-WebOSINT Pro is a modular reconnaissance and intelligence gathering framework designed for advanced web application analysis and security research.
+> **This tool is for authorized security testing and research only.**
+>
+> Scanning systems you do not own, or for which you do not hold **explicit written
+> permission**, is illegal in most jurisdictions. You are solely responsible for how
+> you use this software and for complying with all applicable laws, contracts, and
+> the target's rules of engagement.
+>
+> The maintainers accept no liability for misuse or for any damage caused by this tool.
 
-The framework combines passive and active reconnaissance techniques with integrations from popular security tools such as:
+WebOSINT Pro refuses to run until you assert authorization:
 
-- Nmap
-- WPScan
-- Shodan
-- TheHarvester
-- Amass
-- Subfinder
-- WAFW00F
-- Nuclei (optional)
+- `--authorized` — you confirm that you hold permission to test the target.
+- `--confirm-target example.com` — you re-type the exact target, or confirm it interactively.
 
-It provides detailed analysis of:
-
-- Web infrastructure
-- DNS & domain intelligence
-- SSL/TLS security
-- WAF & IDS detection
-- SIEM exposure
-- API & JWT analysis
-- WebSockets
-- Database exposure
-- Honeypot & decoy detection
-- CVE/CWE mapping
-- Public IP reputation
-- Directory enumeration
-- JavaScript endpoint discovery
+No DNS lookup, HTTP request, or external tool runs before that gate passes.
 
 ---
 
-# Features
+## Installation
 
-## Core Reconnaissance
-
-- Domain Intelligence
-- WHOIS Information
-- DNS Enumeration
-- Subdomain Enumeration
-- Reverse DNS (PTR)
-- ASN & ISP Detection
-- GeoIP Lookup
-
-## Web Application Analysis
-
-- HTTP Header Analysis
-- Security Header Detection
-- Web Technology Fingerprinting
-- API Endpoint Detection
-- JWT Analysis
-- WebSocket Detection
-- Directory & File Discovery
-- Sensitive File Detection
-- JavaScript Recon
-
-## Security Detection
-
-- WAF Detection
-- Firewall Detection
-- IDS/IPS Inference
-- Honeypot Detection
-- Decoy Service Detection
-- SIEM Exposure Checks
-- SSL/TLS Weakness Detection
-
-## Vulnerability Intelligence
-
-- CVE Mapping
-- CWE Mapping
-- Service Version Analysis
-- Public IP Reputation Checks
-- Blacklist Detection
-
-## Integrations
-
-- Nmap
-- WPScan
-- Shodan
-- TheHarvester
-- Amass
-- Subfinder
-- WAFW00F
-- Nuclei
-
-## Reporting
-
-- JSON Reports
-- HTML Reports
-- Scan Logs
-- Historical Scan Retention
-
----
-
-# Project Structure
+Requires Python 3.10 or newer. Full guide: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ```bash
-webosint-pro/
-│
-├── core/
-├── integrations/
-├── modules/
-├── reports/
-├── utils/
-├── logs/
-├── wordlists/
-│
-├── config.json
-├── install.sh
-├── requirements.txt
-├── webosint.py
-└── README.md
-```
+git clone https://github.com/OWNER/REPO.git
+cd REPO
 
----
-
-# Installation
-
-## Clone Repository
-
-```bash
-git clone https://github.com/asadnoor9/webosint-pro.git
-cd webosint-pro
-```
-
----
-
-# Create Virtual Environment
-
-```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate          # Windows: venv\Scripts\activate
+
+pip install --upgrade pip
+pip install -e '.[all]'
+
+chmod +x scripts/*.sh install.sh
 ```
 
----
-
-# Install Python Dependencies
+Recommended system packages (optional, but DNS, WHOIS and port results are
+richer with them):
 
 ```bash
-pip install -r requirements.txt
+sudo apt install nmap dnsutils whois        # Debian, Ubuntu, Kali, Parrot
 ```
 
----
-
-# Install External Tools
+Verify:
 
 ```bash
-chmod +x install.sh
-./install.sh
+webosint doctor      # exits 0 when healthy
+webosint version
 ```
 
----
+`'.[all]'` installs every optional feature: web dashboard, PDF/Word/Excel
+reporting, service management and integrations. Keep the quotes — zsh treats
+bare square brackets as a glob. For a leaner install, see the
+[dependency groups](docs/INSTALLATION.md#optional-dependency-groups).
 
-# Required External Tools
-
-The framework supports integration with:
-
-| Tool | Purpose |
-|------|----------|
-| Nmap | Port scanning & service detection |
-| WPScan | WordPress enumeration |
-| WAFW00F | WAF detection |
-| Amass | Subdomain enumeration |
-| Subfinder | Passive subdomain enumeration |
-| TheHarvester | OSINT collection |
-| Nuclei | Vulnerability scanning |
-| Shodan API | Internet-wide intelligence |
+Optional external tools (`subfinder`, `amass`, `whois`, `dig`, `nmap`, `nuclei`,
+`wpscan`, `wafw00f`, `httpx`) are auto-detected. They are never required, are
+launched only from a strict allowlist, and the intrusive ones need `--active`.
 
 ---
 
-# Usage
+## Documentation
 
-## Basic Scan
+| Guide | Contents |
+| --- | --- |
+| [Installation](docs/INSTALLATION.md) | Requirements, dependency groups, service setup, LAN access, upgrading |
+| [Usage](docs/USAGE.md) | Authorization gate, modules, profiles, reports, dashboard, configuration |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common failures and their fixes |
+| [Architecture](ARCHITECTURE.md) | Pipeline, plugin lifecycle, event bus, confidence engine |
+| [Contributing](CONTRIBUTING.md) | Development workflow and standards |
+| [Security policy](SECURITY.md) | Reporting vulnerabilities |
+| [Changelog](CHANGELOG.md) | Release history |
+
+---
+
+## Quick start
 
 ```bash
-python3 webosint.py -t example.com
+# Passive OSINT (the safe default)
+python webosint.py -t example.com --authorized --confirm-target example.com
+
+# Passive, machine-readable output on stdout
+python webosint.py -t example.com --authorized --confirm-target example.com --json
+
+# Choose specific modules
+python webosint.py -t example.com --authorized --confirm-target example.com -m dns,whois,ssl
+
+# See every module and whether it is passive or active
+python webosint.py --list-modules
 ```
 
 ---
 
-## Full Scan
+## Passive vs active mode
+
+| | Passive (default) | Active (`--active`) |
+|---|---|---|
+| Traffic to target | None or ordinary web requests | Intrusive probes |
+| Techniques | DNS, WHOIS, certificate transparency, public archives, passive sources | Port scans, directory brute force, WAF probing, vulnerability templates |
+| Third-party tools | `subfinder`, `amass -passive`, `whois`, `dig` | `nmap`, `nuclei`, `wpscan`, `wafw00f`, `httpx` |
+| Detection risk | Low | High — will appear in the target's logs |
+| Requires | `--authorized` | `--authorized` **and** `--active` |
+
+Active modules are silently skipped in passive mode and reported in the summary,
+so a passive run can never accidentally send an intrusive probe.
 
 ```bash
-python3 webosint.py -t example.com --full
+# Active mode: only with written authorization that covers intrusive testing
+python webosint.py -t example.com --authorized --confirm-target example.com --active
 ```
 
 ---
 
-## Specific Modules
+## Safety controls
+
+| Control | Default | Flag |
+|---|---|---|
+| Authorization required | enforced | `--authorized` |
+| Target confirmation | enforced | `--confirm-target <target>` |
+| Passive only | on | `--active` to opt out |
+| TLS certificate verification | **on** | `--insecure-tls-i-accept-the-risk` |
+| Localhost / private / reserved / link-local IPs | blocked | `--allow-private` |
+| Cloud metadata endpoints (169.254.169.254) | always blocked | — |
+| Redirect following | max 3 hops, each re-validated | `--max-redirects` |
+| Non-HTTP(S) schemes | blocked | — |
+| Target allowlist | optional | `--allowlist configs/allowlist.json` |
+| Shell execution | never used | — |
+| Telemetry / analytics | none, ever | — |
+
+Disabling TLS verification marks **every** finding in the run as `UNTRUSTED` in the
+console output and in the reports.
+
+### Allowlist
+
+```json
+{
+  "targets": ["example.com", "test.example.org", "93.184.216.0/24"]
+}
+```
+
+Subdomains of a listed domain and addresses inside a listed CIDR are permitted;
+everything else is refused.
+
+---
+
+## Privacy behaviour
+
+- **Data minimization** — `--detail minimal|standard|detailed` (default `standard`).
+  `minimal` drops emails, personal names and other PII entirely.
+- **Redaction everywhere** — API keys, tokens, JWTs, cookies, credentials, internal
+  IPs and local filesystem paths are scrubbed from the console, logs, reports and
+  exception messages.
+- **No raw capture** — raw HTTP bodies, request headers and query data are never
+  written unless you pass `--keep-raw`.
+- **No stack traces** — errors are reported as short redacted messages.
+- **Secrets come from the environment only** — never from the CLI or config file, so
+  they cannot leak into your shell history. See `.env.example`.
+- **Retention** — reports older than `--retention-days` (30) and logs older than
+  `--log-retention-days` (14) are cleaned up automatically; temporary files are
+  created `0600` and removed at the end of each run. Disable with `--no-cleanup`.
+- **Telemetry** — none. There is no analytics or outbound reporting of any kind.
+
+---
+
+## Output
+
+Default console output is deliberately quiet: actionable findings, a summary,
+warnings and errors only.
+
+```
+  Target  example.com
+  Mode    passive  detail=standard tls=verified
+  Modules 12
+
+  Actionable findings
+   MEDIUM   Missing Content-Security-Policy  [likely, confidence 85%, via http]
+   LOW      Certificate expires in 19 days   [confirmed, confidence 99%, via ssl]
+
+  Scan complete | 24.6s | modules 12/12 | findings 47 | medium=1  low=1
+```
+
+| Verbosity | Shows |
+|---|---|
+| `-q` / `--quiet` | errors only |
+| default | warnings, errors, summary |
+| `-v` | per-module progress and findings |
+| `-vv` | per-request debug detail |
+
+Findings are deduplicated across modules using stable normalized identifiers, ordered
+deterministically by severity then identifier, and annotated with a confidence score,
+source attribution, evidence summary and status label (`confirmed`, `likely`,
+`possible`, `unverified`, `untrusted`).
+
+### Report file formats
+
+Reports are written to `reports/` with `0600` permissions. Choose one with
+`--output`, or use `--output all` to write every format at once.
+
+| `--output` | File | Best for |
+|---|---|---|
+| `json` (default) | `.json` | Automation, diffing, piping into other tools |
+| `html` | `.html` | A styled, self-contained web page you can open in a browser |
+| `markdown` | `.md` | Pasting into tickets, wikis or Git |
+| `csv` | `.csv` | Spreadsheets — one row per finding, opens cleanly in Excel |
+| `docx` | `.docx` | Word deliverables and client reports |
+| `pdf` | `.pdf` | Fixed-layout reports for sign-off or archiving |
+| `all` | all of the above | |
+| `none` | — | Console only, nothing written to disk |
+
+Word and PDF export need two extra libraries:
 
 ```bash
-python3 webosint.py -t example.com --modules dns,ssl,waf
+pip install -r requirements-web.txt     # or: pip install '.[reports]'
 ```
 
----
-
-## Aggressive Mode
+Examples:
 
 ```bash
-python3 webosint.py -t example.com --mode aggressive
+# A PDF for the client and a CSV for triage
+python webosint.py -t example.com --authorized --confirm-target example.com --output all
+
+# Word document only
+python webosint.py -t example.com --authorized --confirm-target example.com --output docx
 ```
+
+`--json` prints the full machine-readable result to stdout, separately from the
+files written to disk.
 
 ---
 
-## Stealth Mode
+## Web interface
+
+A local browser UI drives the same pipeline as the CLI, including the mandatory
+authorization gate.
 
 ```bash
-python3 webosint.py -t example.com --mode stealth
+pip install -r requirements-web.txt
+python webserve.py                 # http://127.0.0.1:8000
 ```
 
----
+From the browser you can set the target, tick the authorization acknowledgement,
+re-type the target to confirm, pick passive or active mode, choose a profile and
+detail level, select individual modules, tune threads/timeout/rate limit, and
+tick which file formats to generate.
 
-## Verbose Levels
+The same safety rules apply — the UI cannot bypass them:
+
+- the authorization checkbox and a matching target confirmation are both required
+- localhost, private and reserved ranges stay blocked unless you opt in
+- active modules stay off until you explicitly enable them
+- TLS verification stays on by default
+- findings are redacted according to the selected detail level
+- errors are shown as short messages, never stack traces
+
+### Background scans and progress
+
+Every scan runs in a background worker, so you can close the tab, start another
+scan, or come back later. The job page shows a live progress bar, the modules
+currently running, elapsed time, and a **Cancel scan** button. `/jobs` lists every
+scan from the current server session with its status, target, mode and findings
+count.
+
+### Scan speed
+
+A speed selector sets threads, rate limit, timeout and inter-request delay in one
+choice:
+
+| Speed | Concurrency | Character |
+| --- | --- | --- |
+| Slow | 2 | Gentle and quiet; best for fragile or monitored hosts |
+| Normal | 5 | Balanced default |
+| Fast | 12 | Noticeably louder |
+| Turbo | 24 | Loud; expect rate limiting and IDS attention |
+
+The individual threads/timeout/rate-limit fields still win if you fill them in,
+and the selected profile keeps its own ceiling — a `safe` profile will not let
+Turbo run at full speed.
+
+### Verbosity
+
+A verbosity selector controls the live log panel on the job page: **Quiet**
+(errors only), **Normal**, **Verbose** (per-request debug) and **Debug** (trace).
+Log lines are streamed incrementally and pass through the same redaction filter
+as the log files, so secrets never reach the browser.
+
+### Reports in the portal
+
+When a scan finishes, every generated file is listed with both **Open** and
+**Download**. HTML, Markdown, JSON and CSV reports open directly in the portal;
+DOCX and PDF download. Opened reports are served with a sandboxing
+`Content-Security-Policy` so a report can never script against the portal.
+
+### Host and infrastructure
+
+The job page also summarises what was observed about the host:
+
+- **Network** — resolved IPs, ISP, organisation, ASN, geo, hosting/proxy flags
+- **Web server** — product and version (for example Apache 2.4.65, nginx, IIS),
+  banner, `X-Powered-By`, CDN and detected technologies
+- **Operating system** — best guess, device type and the source of the guess
+- **Exposed services** — port, protocol, state, service, product and version
+
+This is derived from data the scan already collected; it does not send extra
+requests.
+
+### Access from other machines on your network
+
+By default the server binds to `127.0.0.1` and is unreachable from anywhere else.
+To reach it from another machine on the same VLAN:
 
 ```bash
--v      Basic verbosity
--vv     Advanced verbosity
--vvv    Debug verbosity
+python webserve.py --lan
 ```
 
-Example:
+`--lan` binds all interfaces and prints both the local and network URLs. **No
+access token is required by default** — anyone who can reach the port can open
+the UI, so only do this on a trusted, isolated network. The launcher prints a
+warning to remind you.
+
+Token authentication is available when you want it:
 
 ```bash
-python3 webosint.py -t example.com --full -vvv
+python webserve.py --lan --auth                               # generate a token and require it
+python webserve.py --lan --auth-token "$WEBOSINT_WEB_TOKEN"   # pick your own token
+python webserve.py --lan --no-auth                            # force the token off (default)
+python webserve.py --lan --self-signed                        # HTTPS with a throwaway cert
+python webserve.py --lan --tls-cert cert.pem --tls-key key.pem
+python webserve.py --port 8080
 ```
 
----
+With `--auth`, the token is printed as a ready-to-click URL; other machines supply
+it once (`?token=...`, or an `Authorization: Bearer` header), after which it is
+kept in an HttpOnly, SameSite=Strict cookie.
 
-# Scan Modes
+The authorization gate, private-range blocking and passive-by-default rules are
+unaffected by this setting — disabling the token only removes the portal login,
+not any scan safety control.
 
-| Mode | Description |
-|------|-------------|
-| Safe | Passive & low-noise scanning |
-| Medium | Balanced scanning |
-| Aggressive | Deep enumeration & fingerprinting |
-| Stealth | Slow randomized requests |
-
----
-
-# Modules
-
-| Module | Description |
-|--------|-------------|
-| ip | IP intelligence |
-| whois | WHOIS information |
-| dns | DNS enumeration |
-| ssl | SSL/TLS analysis |
-| subdomains | Subdomain enumeration |
-| ports | Port scanning |
-| waf | Firewall/WAF detection |
-| ids | IDS/IPS detection |
-| siem | SIEM exposure checks |
-| honeypot | Honeypot detection |
-| database | Database exposure |
-| api | API & JWT analysis |
-| websocket | WebSocket detection |
-| javascript | JS endpoint extraction |
-| webapp | Web application structure |
-| cve | CVE/CWE mapping |
+If the page is unreachable from another host, check the server firewall
+(`sudo ufw allow 8000/tcp` on Debian/Kali) — the listener itself is already
+bound to every interface with `--lan`.
 
 ---
 
-# Reporting
+### Running in the background
 
-Reports are automatically saved in:
+The web interface can detach from your terminal and keep serving:
 
 ```bash
-reports/
+# Start detached (survives closing the terminal)
+python webserve.py --lan --background
+
+# Check on it
+python webserve.py --status
+
+# Stop it
+python webserve.py --stop
 ```
 
-Formats:
+In background mode all output is appended to a log file instead of the console.
+By default the PID and log live in `~/.webosint/`:
 
-- JSON
-- HTML
+| File | Purpose |
+| --- | --- |
+| `~/.webosint/webosint-web.pid` | PID of the detached server |
+| `~/.webosint/webosint-web.log` | Server and scan output |
 
-Logs are stored in:
+Override them with `--pid-file` / `--log-file`, or move the whole directory with
+the `WEBOSINT_RUNTIME_DIR` environment variable. Starting a second background
+server while one is already running is refused rather than silently duplicated.
+
+### Starting on boot
+
+To have the interface come up automatically after a reboot, install it as a
+systemd service. Any flags you pass to the installer are forwarded to
+`webserve.py`:
 
 ```bash
-logs/
+# Localhost only
+sudo ./scripts/install-service.sh
+
+# Reachable from other machines on your network, protected by a token
+sudo ./scripts/install-service.sh --lan --auth
 ```
 
----
-
-# Example Output
+The installer runs the service as your own user (not root), prefers the project
+virtualenv if one exists, and enables the unit so it starts at boot.
 
 ```bash
-[+] Target Resolved: 104.21.x.x
-[+] WAF Detected: Cloudflare
-[+] SSL Grade: TLS 1.3
-[+] API Endpoint Found: /api/v1/login
-[+] JWT Token Detected
-[+] Open Port: 443/tcp
-[+] SIEM Interface Exposed: Kibana
+systemctl status webosint-web        # is it up?
+journalctl -u webosint-web -f        # follow the logs
+sudo systemctl restart webosint-web  # restart
+sudo ./scripts/install-service.sh --uninstall
+```
+
+Do not combine the service with `--background`: systemd supervises the process
+itself, so the server must stay in the foreground under its control.
+
+> Exposing the UI on a network lets anyone who can reach the port start scans.
+> Pair `--lan` with `--auth` and keep it on trusted networks.
+
+## Configuration
+
+Environment variables use the `WEBOSINT_` prefix. Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+API keys are read **only** from the environment:
+
+| Variable | Purpose |
+|---|---|
+| `WEBOSINT_SHODAN_KEY` | Shodan enrichment (optional) |
+| `WEBOSINT_NVD_KEY` | NVD CVE lookups (optional) |
+
+---
+
+## Engine 3.0 architecture
+
+The 3.0 engine adds a layered platform core in `engine/` alongside the existing
+`core/` and `modules/` packages. Legacy modules are **adapted**, not rewritten,
+so every existing scan keeps working exactly as before while gaining evidence
+backed scoring, dynamic plugin selection and multi-audience reporting.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full reference.
+
+### Why scans got faster and quieter
+
+- **Technology-aware selection.** The plan is derived from what was actually
+  fingerprinted. A statically hosted Next.js site no longer runs WordPress, PHP,
+  database, SIEM, IDS or honeypot checks. Every skip is recorded with a reason
+  and shown in the technical report.
+- **Shared cache with single-flight coalescing.** DNS, HTTP and TLS lookups are
+  performed once and reused. Ten plugins asking for the same record produce one
+  request.
+- **Per-plugin deadlines.** A stalled plugin is abandoned instead of holding the
+  whole scan open.
+
+### Why findings became more trustworthy
+
+Confidence is computed from evidence rather than assigned:
+
+| Rule | Effect |
+|---|---|
+| Evidence kinds are weighted | DNS/TLS/certificate are authoritative; an HTML body match is weak |
+| Evidence combines with noisy-OR | Two independent indicators beat one strong one |
+| Repeated same-kind evidence decays | Five HTML matches are still "the HTML said so" |
+| A single evidence kind is capped at 72% | **One indicator can never produce a reported finding** |
+| Below 80% confidence is suppressed | Kept for analyst review, excluded from reports |
+| 90%+ with multi-indicator validation | Marked `verified` |
+
+Every finding carries `confidence`, `severity`, `verified`, `evidence`,
+`validation_method`, `risk_score`, `exploitability` and
+`false_positive_probability`, plus CWE / OWASP / MITRE ATT&CK / PCI DSS / NIST
+mappings where they apply.
+
+---
+
+## Service management
+
+Install the console command with `pip install -e .`, then:
+
+```bash
+webosint start          # start in the background (single instance)
+webosint stop           # graceful shutdown
+webosint restart
+webosint reload         # reload config and plugins without dropping the process
+webosint status         # state, PID, uptime, memory, CPU, threads, queue, plugins
+webosint health         # health checks; exit 0 healthy, 1 degraded, 2 unhealthy
+webosint logs -f        # tail the service log
+webosint version
+webosint update         # git pull + reinstall (refuses on a dirty tree)
+webosint doctor         # diagnose the installation and print exact fixes
+```
+
+Add `--json` to any command for machine-readable output.
+
+**`webosint doctor` is the fastest way to resolve missing-dependency errors** -
+it reports exactly which optional packages are absent and the command to install
+each one.
+
+### Network access
+
+By default the dashboard binds to `127.0.0.1` and is unreachable from other
+machines. Two flags are needed to change that: `--lan` selects the bind address
+and `--allow-remote` confirms you meant it. The installer adds the second one
+for you:
+
+```bash
+sudo ./scripts/install-service.sh --lan
+```
+
+Then allow the port for your subnet only:
+
+```bash
+sudo ufw allow from 192.168.1.0/24 to any port 8000 proto tcp
+```
+
+Verify the bind address is `0.0.0.0` and not `127.0.0.1`:
+
+```bash
+ss -ltnp | grep 8000
+```
+
+> **The dashboard has no authentication.** Anyone who can reach the port can
+> launch scans from your machine against any target and read every stored
+> report. Scope the firewall rule to trusted hosts, never port-forward it to
+> the internet, and prefer `--lan --auth --self-signed` on a shared network.
+
+
+### Starting on boot
+
+| Platform | Install | Manage |
+|---|---|---|
+| Linux | `sudo ./scripts/install-service.sh` | `systemctl start|stop|restart|status webosint` |
+| macOS | `sudo launchctl load -w /Library/LaunchDaemons/pk.webosint.plist` | `launchctl start|stop pk.webosint` |
+| Windows | `.\scripts\install-service.ps1` | `sc.exe start WebOSINT`, `Get-Service WebOSINT`, `services.msc` |
+
+All three start at boot and restart automatically after a crash with a backoff.
+
+---
+
+## Scan history and inventory
+
+Scans, findings, technologies, assets, certificates, DNS records, reports and
+risk scores are persisted. SQLite is the default and needs no setup; point
+`WEBOSINT_DATABASE_URL` at a PostgreSQL or MySQL DSN to use a server instead:
+
+```bash
+export WEBOSINT_DATABASE_URL="postgresql+psycopg://user:pass@localhost/webosint"
 ```
 
 ---
 
-# Screenshots
+## Optional dependencies
 
-Future versions will include:
+Several capabilities are optional so the base install stays small. Missing ones
+degrade gracefully and are reported by `webosint doctor`.
 
-- Dashboard UI
-- Live monitoring
-- Visual recon maps
-- Screenshot engine
-
----
-
-# Roadmap
-
-## Upcoming Features
-
-- AI-based finding prioritization
-- Telegram/Slack notifications
-- Distributed scanning
-- Docker support
-- Dashboard frontend
-- Elasticsearch integration
-- Automated bug bounty reporting
+```bash
+pip install '.[reports]'   # Word, PDF and Excel reports
+pip install '.[service]'   # memory and CPU metrics in `webosint status`
+pip install '.[web]'       # web dashboard
+pip install '.[all]'       # everything above
+```
 
 ---
 
-# Security & Ethics
+## Development
 
-This tool is intended for:
+```bash
+ruff check .          # lint
+ruff format .         # format
+pytest                # tests (no network access required)
+```
 
-- Authorized penetration testing
-- Security research
-- Bug bounty programs
-- Educational purposes
-
-Do NOT use against systems without explicit authorization.
-
-The author is not responsible for misuse.
+The test suite covers authorization, target blocking, TLS defaults, redaction,
+deduplication and output behaviour. No test performs external reconnaissance.
 
 ---
 
-# Contributing
+## Contributing & security
 
-Pull requests and improvements are welcome.
-
-## Steps
-
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push branch
-5. Create pull request
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development workflow and coding standards.
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability.
 
 ---
 
-# License
+## License
 
-MIT License
+Released under the [MIT License](LICENSE).
 
----
-
-# Author
-
-## Asad Noor
-
-- Assistant Manager – Data Center
-- Cybersecurity Enthusiast
-- Network & System Administrator
-
-LinkedIn:
-https://www.linkedin.com/in/asadnoor951
-
----
-
-# Disclaimer
-
-This framework is provided for educational and authorized security testing purposes only.
-
-Unauthorized usage against third-party systems may violate laws and regulations.
-
-Use responsibly.
+The license grants permission to use the software. It does **not** grant
+permission to scan anything. Authorization for every target is your
+responsibility, and the software is provided without warranty of any kind.

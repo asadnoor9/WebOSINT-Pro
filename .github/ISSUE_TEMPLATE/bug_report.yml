@@ -1,0 +1,61 @@
+name: Bug report
+description: Something behaves incorrectly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: please redact target names, IP addresses, hostnames and
+        any output that identifies a real system you scanned.
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I have removed real targets, IPs and hostnames from this report
+          required: true
+        - label: I am reporting a defect, not requesting help attacking a system
+          required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. webosint ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `webosint doctor`
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `webosint version`
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and Python version
+      placeholder: Debian 12, Python 3.11.2
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Redacted. Journal logs via `journalctl -u webosint -n 100`.
+      render: text

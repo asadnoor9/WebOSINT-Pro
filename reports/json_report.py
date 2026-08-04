@@ -5,6 +5,8 @@ WebOSINT Pro - JSON Report Generator
 import json
 from datetime import datetime
 
+from reports.enrichment import enrich_results
+
 
 class JSONReport:
     def __init__(self, results: dict):
@@ -12,16 +14,18 @@ class JSONReport:
 
     def save(self, path: str):
         report = {
-            'tool': 'WebOSINT Pro',
-            'version': '1.0.0',
-            'generated': datetime.now().isoformat(),
-            'meta': self.results.get('meta', {}),
-            'summary': self.results.get('summary', {}),
-            'findings': self.results.get('findings', {}),
-            'errors': self.results.get('errors', {}),
+            "tool": "WebOSINT Pro",
+            "version": "1.0.0",
+            "generated": datetime.now().isoformat(),
+            "meta": self.results.get("meta", {}),
+            "summary": self.results.get("summary", {}),
+            "infrastructure": self.results.get("infrastructure", {}),
+            "findings": self.results.get("findings", {}),
+            "enrichment": enrich_results(self.results),
+            "errors": self.results.get("errors", {}),
         }
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, default=str, ensure_ascii=False)
 
         return path

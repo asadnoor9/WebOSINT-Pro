@@ -1,189 +1,262 @@
 """
-WebOSINT Pro - Verbose Logger
-Verbosity levels:
-  0 (default) : WARN  - errors + scan summary only
-  1 (-v)      : INFO  - module start/stop, key findings, counts
-  2 (-vv)     : DEBUG - every request URL, response code, timing
-  3 (-vvv)    : TRACE - raw headers, body snippets, internal state
+WebOSINT Pro - Structured logger
+
+  * Every record passes through the redactor before it reaches a console or a
+    file, so API keys, cookies, internal IPs and local paths never get logged.
+  * Console levels: quiet / default / verbose (-v) / debug (-vv).
+  * File logs are JSON lines (one object per record) and are optional.
+  * Repeated identical console messages are suppressed to keep output low-noise.
 """
 
+from __future__ import annotations
+
+import json
 import logging
+import logging.handlers
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Any
 
-# Custom TRACE level (below DEBUG=10)
+from core.redaction import DEFAULT_REDACTOR, Redactor
+
 TRACE = 5
-logging.addLevelName(TRACE, 'TRACE')
+logging.addLevelName(TRACE, "TRACE")
 
 
-def _c(code):
-    """Return ANSI escape or empty string if stdout is not a tty."""
-    return code if sys.stderr.isatty() else ''
+def _ansi(code: str) -> str:
+    return code if sys.stderr.isatty() else ""
 
 
-RESET   = _c('\033[0m')
-BOLD    = _c('\033[1m')
-DIM     = _c('\033[2m')
-RED     = _c('\033[91m')
-GREEN   = _c('\033[92m')
-YELLOW  = _c('\033[93m')
-CYAN    = _c('\033[96m')
-MAGENTA = _c('\033[95m')
+RESET = _ansi("\033[0m")
+BOLD = _ansi("\033[1m")
+DIM = _ansi("\033[2m")
+RED = _ansi("\033[91m")
+GREEN = _ansi("\033[92m")
+YELLOW = _ansi("\033[93m")
+CYAN = _ansi("\033[96m")
+MAGENTA = _ansi("\033[95m")
 
 
-class _ColorFormatter(logging.Formatter):
-    STYLES = {
-        'TRACE':    DIM,
-        'DEBUG':    DIM,
-        'INFO':     CYAN,
-        'WARNING':  YELLOW,
-        'ERROR':    RED,
-        'CRITICAL': RED + BOLD,
+# ── Redaction filter ─────────────────────────────────────────────────────────
+
+
+class RedactionFilter(logging.Filter):
+    """Scrubs sensitive values from every log record, whatever the handler."""
+
+    def __init__(self, redactor: Redactor | None = None) -> None:
+        super().__init__()
+        self.redactor = redactor or DEFAULT_REDACTOR
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            record.msg = self.redactor.text(record.getMessage())
+            record.args = ()
+        except Exception:
+            record.msg = "[unloggable message redacted]"
+            record.args = ()
+        for attr in ("url", "finding_value", "target"):
+            value = getattr(record, attr, None)
+            if isinstance(value, str):
+                setattr(record, attr, self.redactor.text(value))
+        # Stack traces are never written out; they can contain paths and payloads.
+        record.exc_info = None
+        record.exc_text = None
+        return True
+
+
+class DedupeFilter(logging.Filter):
+    """Drops an identical consecutive message so the console stays readable."""
+
+    def __init__(self, window: int = 25) -> None:
+        super().__init__()
+        self._seen: list[str] = []
+        self._window = window
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        key = f"{record.levelno}:{record.getMessage()}"
+        if key in self._seen:
+            return False
+        self._seen.append(key)
+        if len(self._seen) > self._window:
+            self._seen.pop(0)
+        return True
+
+
+# ── Formatters ──────────────────────────────────────────────────────────────
+
+
+class JSONFormatter(logging.Formatter):
+    """One JSON object per line, safe for SIEM ingestion."""
+
+    def __init__(self, session_id: str = "") -> None:
+        super().__init__()
+        self.session_id = session_id
+
+    def format(self, record: logging.LogRecord) -> str:
+        doc: dict[str, Any] = {
+            "@timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "session_id": self.session_id,
+        }
+        for attr in (
+            "module_name",
+            "url",
+            "status_code",
+            "elapsed_ms",
+            "risk",
+            "finding_key",
+            "audit_event",
+        ):
+            value = getattr(record, attr, None)
+            if value is not None:
+                doc[attr] = value
+        return json.dumps(doc, ensure_ascii=False, sort_keys=True)
+
+
+class ConsoleFormatter(logging.Formatter):
+    _STYLES = {
+        "TRACE": DIM,
+        "DEBUG": DIM,
+        "INFO": CYAN,
+        "WARNING": YELLOW,
+        "ERROR": RED,
+        "CRITICAL": RED + BOLD,
     }
-    ICONS = {
-        'TRACE':    '·',
-        'DEBUG':    '·',
-        'INFO':     '›',
-        'WARNING':  '!',
-        'ERROR':    '✗',
-        'CRITICAL': '✗',
+    _ICONS = {
+        "TRACE": ".",
+        "DEBUG": ".",
+        "INFO": ">",
+        "WARNING": "!",
+        "ERROR": "x",
+        "CRITICAL": "x",
     }
 
-    def format(self, record):
-        lvl   = record.levelname
-        color = self.STYLES.get(lvl, RESET)
-        icon  = self.ICONS.get(lvl, '›')
-        ts    = datetime.fromtimestamp(record.created).strftime('%H:%M:%S')
-        msg   = record.getMessage()
-        # Strip redundant [module] bracket duplicates when not needed
-        return f"{DIM}{ts}{RESET} {color}{icon}{RESET} {msg}"
+    def format(self, record: logging.LogRecord) -> str:
+        color = self._STYLES.get(record.levelname, RESET)
+        icon = self._ICONS.get(record.levelname, ">")
+        stamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S")
+        return f"{DIM}{stamp}{RESET} {color}{icon}{RESET} {record.getMessage()}"
+
+
+# ── Logger ──────────────────────────────────────────────────────────────────
 
 
 class WebOSINTLogger(logging.Logger):
-    """Drop-in logger with extra helpers used throughout scan modules."""
+    """Logger with scan-specific helpers."""
 
-    # ── Custom level helpers ─────────────────────────────────────────────
-    def trace(self, msg, *args, **kwargs):
+    def trace(self, msg: str, *args: Any, **kwargs: Any) -> None:
         if self.isEnabledFor(TRACE):
             self._log(TRACE, msg, args, **kwargs)
 
-    # ── Scan-aware helpers ───────────────────────────────────────────────
-    def request(self, method: str, url: str, status: int = None,
-                elapsed_ms: float = None):
-        """v=2 (-vv): log every HTTP request with status + timing."""
+    def request(
+        self,
+        method: str,
+        url: str,
+        status: int | None = None,
+        elapsed_ms: float | None = None,
+    ) -> None:
+        """HTTP request line — debug only (-vv)."""
         if not self.isEnabledFor(logging.DEBUG):
             return
-        s = ''
-        if status is not None:
-            sc = GREEN if status < 400 else (YELLOW if status < 500 else RED)
-            s = f" {sc}{status}{RESET}"
-        t = f" {DIM}{elapsed_ms:.0f}ms{RESET}" if elapsed_ms is not None else ''
-        self.debug(f"{DIM}{method}{RESET} {url}{s}{t}")
+        status_text = f" {status}" if status is not None else " -"
+        timing = f" {elapsed_ms:.0f}ms" if elapsed_ms is not None else ""
+        self.debug(
+            f"{method} {url}{status_text}{timing}",
+            extra={"url": url, "status_code": status, "elapsed_ms": elapsed_ms},
+        )
 
-    def finding(self, module: str, key: str, value, risk: str = 'info'):
-        """v=1 (-v): surface a notable finding inline."""
+    def finding(self, module: str, key: str, value: Any, risk: str = "info") -> None:
+        """Notable finding — shown at -v."""
         if not self.isEnabledFor(logging.INFO):
             return
-        RCOLORS = {
-            'critical': RED + BOLD,
-            'high':     RED,
-            'medium':   YELLOW,
-            'low':      CYAN,
-            'info':     DIM,
+        colors = {
+            "critical": RED + BOLD,
+            "high": RED,
+            "medium": YELLOW,
+            "low": CYAN,
+            "info": DIM,
         }
-        rc   = RCOLORS.get(risk.lower(), RESET)
-        vstr = str(value)[:120]
-        self.info(f"[{BOLD}{module}{RESET}] {rc}{key}{RESET}: {vstr}")
+        color = colors.get(str(risk).lower(), RESET)
+        text = str(value)[:120]
+        self.info(
+            f"[{module}] {color}{key}{RESET}: {text}",
+            extra={"module_name": module, "finding_key": key, "risk": risk},
+        )
 
-    def module_start(self, name: str):
-        """v=1: announce module begin."""
+    def module_start(self, name: str) -> None:
         if self.isEnabledFor(logging.INFO):
-            self.info(f"{DIM}{'─'*4}{RESET} {BOLD}{name.upper()}{RESET} ▶ started")
+            self.info(f"{name} started", extra={"module_name": name})
 
-    def module_done(self, name: str, count: int, elapsed_ms: float):
-        """v=1: announce module end with stats."""
+    def module_done(self, name: str, count: int, elapsed_ms: float) -> None:
         if self.isEnabledFor(logging.INFO):
             self.info(
-                f"{DIM}{'─'*4}{RESET} {BOLD}{name.upper()}{RESET} ■ done "
-                f"| {GREEN}{count}{RESET} findings "
-                f"| {DIM}{elapsed_ms:.0f}ms{RESET}"
+                f"{name} done | {count} findings | {elapsed_ms:.0f}ms",
+                extra={"module_name": name, "elapsed_ms": elapsed_ms},
             )
 
-    def raw(self, label: str, data):
-        """v=3 (-vvv): dump raw data (headers, body snippets)."""
+    def raw(self, label: str, data: Any) -> None:
+        """Raw payload dump — only at TRACE and only when raw capture is enabled."""
         if self.isEnabledFor(TRACE):
-            snippet = str(data)[:600].replace('\n', '\\n')
-            self.trace(f"  {DIM}[RAW {label}]{RESET} {snippet}")
+            self.trace(f"[raw {label}] {str(data)[:400]}")
 
-    def req_headers(self, headers: dict):
-        """v=3: dump request/response headers."""
-        if self.isEnabledFor(TRACE):
-            for k, v in list(headers.items())[:20]:
-                self.trace(f"  {DIM}  {k}: {v}{RESET}")
+    def audit(self, event: str, **kwargs: Any) -> None:
+        self.info(f"[audit] {event}", extra={"audit_event": event, **kwargs})
 
 
 logging.setLoggerClass(WebOSINTLogger)
 
 
-# ── Verbosity legend (printed when -v or higher) ─────────────────────────
-_LEVEL_LABEL = {
-    0: f"{DIM}WARN{RESET}  – errors & final summary only",
-    1: f"{CYAN}INFO{RESET}  – module events, key findings",
-    2: f"{CYAN}DEBUG{RESET} – every HTTP request + timing",
-    3: f"{MAGENTA}TRACE{RESET} – raw headers, body, internal state",
-}
+def console_level(verbose: int = 0, quiet: bool = False) -> int:
+    if quiet:
+        return logging.ERROR
+    return {0: logging.WARNING, 1: logging.INFO}.get(verbose, logging.DEBUG)
 
 
-def setup_logger(verbose: int, log_dir: str = 'logs') -> 'WebOSINTLogger':
+def setup_logger(
+    verbose: int = 0,
+    quiet: bool = False,
+    log_dir: str = "logs",
+    session_id: str = "",
+    redactor: Redactor | None = None,
+    write_files: bool = True,
+) -> WebOSINTLogger:
+    """Build the singleton scan logger.
+
+    Console: quiet (errors) / default (warnings) / -v (info) / -vv (debug)
+    Files:   optional JSON lines, rotating, redacted, 0600 permissions
     """
-    Build and return the singleton WebOSINT logger.
+    log: WebOSINTLogger = logging.getLogger("webosint")  # type: ignore[assignment]
+    log.setLevel(TRACE)
+    log.handlers.clear()
+    log.filters.clear()
+    log.propagate = False
 
-    Console levels:
-      0  → WARNING   (quiet, only errors/summary)
-      1  → INFO      (-v)
-      2  → DEBUG     (-vv, requests)
-      3  → TRACE     (-vvv, raw data)
+    redaction = RedactionFilter(redactor)
+    log.addFilter(redaction)
 
-    File always captures DEBUG (or TRACE at -vvv).
-    """
-    os.makedirs(log_dir, exist_ok=True)
-    ts       = datetime.now().strftime('%Y%m%d_%H%M%S')
-    log_file = os.path.join(log_dir, f'webosint_{ts}.log')
+    console = logging.StreamHandler(sys.stderr)
+    console.setLevel(console_level(verbose, quiet))
+    console.setFormatter(ConsoleFormatter())
+    console.addFilter(redaction)
+    console.addFilter(DedupeFilter())
+    log.addHandler(console)
 
-    console_level = {0: logging.WARNING,
-                     1: logging.INFO,
-                     2: logging.DEBUG,
-                     3: TRACE}.get(verbose, TRACE)
-    file_level = TRACE if verbose >= 3 else logging.DEBUG
-
-    logger = logging.getLogger('webosint')
-    logger.setLevel(TRACE)
-    logger.handlers.clear()
-    logger.propagate = False
-
-    # File handler ──────────────────────────────────────────────────────
-    fh = logging.FileHandler(log_file, encoding='utf-8')
-    fh.setLevel(file_level)
-    fh.setFormatter(logging.Formatter(
-        '%(asctime)s  [%(levelname)-8s]  %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    ))
-    logger.addHandler(fh)
-
-    # Console handler ───────────────────────────────────────────────────
-    ch = logging.StreamHandler(sys.stderr)
-    ch.setLevel(console_level)
-    ch.setFormatter(_ColorFormatter())
-    logger.addHandler(ch)
-
-    # Print legend to stderr so it doesn't pollute stdout/reports
-    if verbose >= 1:
-        print(
-            f"\n{DIM}[verbosity]{RESET} level={verbose} "
-            f"→ {_LEVEL_LABEL[min(verbose, 3)]}\n"
-            f"{DIM}[log file ]{RESET} {log_file}\n",
-            file=sys.stderr
+    if write_files:
+        os.makedirs(log_dir, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        json_path = os.path.join(log_dir, f"webosint_{session_id or stamp}.jsonl")
+        handler = logging.handlers.RotatingFileHandler(
+            json_path, maxBytes=5 * 1024 * 1024, backupCount=2, encoding="utf-8"
         )
+        handler.setLevel(logging.DEBUG if verbose >= 2 else logging.INFO)
+        handler.setFormatter(JSONFormatter(session_id=session_id or stamp))
+        handler.addFilter(redaction)
+        log.addHandler(handler)
+        try:
+            os.chmod(json_path, 0o600)
+        except OSError:
+            pass
 
-    return logger  # type: WebOSINTLogger
+    return log

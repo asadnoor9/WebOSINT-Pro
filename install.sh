@@ -382,7 +382,11 @@ fi
 # ── Step 9: Wrapper script ────────────────────────────────────────────
 _header "CLI Wrapper"
 
-WRAPPER="/usr/local/bin/webosint"
+# The packaged CLI ("webosint") is installed by pip as a console script.
+# This wrapper is for the standalone legacy scanner only, so it uses a
+# distinct name and can never shadow the packaged command.
+WRAPPER="/usr/local/bin/webosint-scan"
+LEGACY_WRAPPER="/usr/local/bin/webosint"
 # Resolve the real absolute path NOW so the wrapper never breaks if moved
 REAL_DIR="$(realpath "$SCRIPT_DIR")"
 REAL_VENV="$REAL_DIR/venv/bin/activate"
@@ -408,6 +412,13 @@ if [[ $DRY_RUN -eq 0 ]]; then
 
   sudo chmod +x "$WRAPPER"
   _ok "Wrapper installed : $WRAPPER"
+
+  # Remove a wrapper written by older releases that shadowed the packaged
+  # "webosint" command and silently ran the legacy scanner instead.
+  if [[ -f "$LEGACY_WRAPPER" ]] && grep -q "auto-generated wrapper" "$LEGACY_WRAPPER" 2>/dev/null; then
+    sudo rm -f "$LEGACY_WRAPPER"
+    _ok "Removed stale wrapper : $LEGACY_WRAPPER (now provided by pip)"
+  fi
   _debug "Wrapper content:"
   [[ $VERBOSE -ge 1 ]] && cat "$WRAPPER" | sed 's/^/    /'
 else

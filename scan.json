@@ -1,0 +1,650 @@
+  [warn] No allowlist configured — operating in open-target mode. Ensure written authorization covers this scope.
+{
+  "errors": {},
+  "findings": {
+    "cve": {
+      "cve_lookups": {},
+      "cwe_findings": [
+        {
+          "cwe": "CWE-200 Exposure of Sensitive Information",
+          "finding": "Server version disclosure: LiteSpeed",
+          "recommendation": "Remove or genericize Server header",
+          "severity": "LOW"
+        }
+      ],
+      "recommendations": [
+        {
+          "fix": "Remove or genericize Server header",
+          "issue": "Server version disclosure: LiteSpeed",
+          "priority": "LOW",
+          "reference": "CWE-200 Exposure of Sensitive Information"
+        }
+      ]
+    },
+    "dns": {
+      "A": [
+        "77.37.37.185"
+      ],
+      "DNSSEC": {
+        "enabled": false,
+        "status": "No DNSKEY record"
+      },
+      "MX": [
+        "0 ncbaemultan-edu-pk.mail.protection.outlook.com."
+      ],
+      "NS": [
+        "nolan.ns.cloudflare.com.",
+        "dorthy.ns.cloudflare.com."
+      ],
+      "SOA": [
+        {
+          "expire": 604800,
+          "minimum": 1800,
+          "mname": "dorthy.ns.cloudflare.com.",
+          "refresh": 10000,
+          "retry": 2400,
+          "rname": "dns.cloudflare.com.",
+          "serial": 2407419343
+        }
+      ],
+      "TXT": [
+        "\"MS=ms98664047\"",
+        "\"v=spf1 include:spf.protection.outlook.com -all\""
+      ]
+    },
+    "http": {
+      "_risk_missing_headers": "medium",
+      "allowed_methods": [
+        "GET",
+        "HEAD"
+      ],
+      "base_url": "https://ncbaemultan.edu.pk",
+      "cdn": [
+        "LiteSpeed"
+      ],
+      "cookies": "[REDACTED]",
+      "final_url": "https://ncbaemultan.edu.pk/",
+      "headers": {
+        "Cache-Control": "no-cache, private",
+        "Connection": "close",
+        "Content-Encoding": "gzip",
+        "Content-Security-Policy": "upgrade-insecure-requests",
+        "Content-Type": "text/html; charset=UTF-8",
+        "Date": "Fri, 31 Jul 2026 11:17:27 GMT",
+        "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+        "Referrer-Policy": "no-referrer-when-downgrade",
+        "Server": "LiteSpeed",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-XSS-Protection": "1; mode=block",
+        "alt-svc": "h3=\":443\"; ma=2592000, h3-29=\":443\"; ma=2592000, h3-Q050=\":443\"; ma=2592000, h3-Q046=\":443\"; ma=2592000, h3-Q043=\":443\"; ma=2592000, quic=\":443\"; ma=2592000; v=\"43,46\"",
+        "panel": "hpanel",
+        "platform": "hostinger",
+        "set-cookie": "[REDACTED]"
+      },
+      "hsts": {
+        "present": true,
+        "value": "max-age=31536000; includeSubDomains; preload"
+      },
+      "info_disclosure_headers": {},
+      "missing_security_headers": [
+        "cross-origin-embedder-policy",
+        "cross-origin-opener-policy",
+        "cross-origin-resource-policy"
+      ],
+      "redirect_chain": [],
+      "security_headers": {
+        "content-security-policy": "upgrade-insecure-requests",
+        "permissions-policy": "geolocation=(), microphone=(), camera=()",
+        "referrer-policy": "no-referrer-when-downgrade",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-xss-protection": "1; mode=block"
+      },
+      "server": "LiteSpeed",
+      "status_code": 200
+    },
+    "ip": {
+      "77.37.37.185": {
+        "blacklisted": false,
+        "geo": {
+          "as": "AS47583 Hostinger International Limited",
+          "city": "Manchester",
+          "country": "United Kingdom",
+          "hosting": true,
+          "isp": "HOSTINGER GB",
+          "mobile": false,
+          "org": "",
+          "proxy": "[REDACTED]",
+          "regionName": "England",
+          "timezone": "Europe/London"
+        },
+        "ip": "77.37.37.185",
+        "is_loopback": false,
+        "is_multicast": false,
+        "is_private": false,
+        "version": "IPv4"
+      },
+      "resolved_ips": [
+        "77.37.37.185"
+      ]
+    },
+    "javascript": {
+      "_risk_secrets": "[REDACTED]",
+      "endpoints": [],
+      "inline_secrets": "[REDACTED]",
+      "js_files": [
+        "https:/…/tilt.jquery.min.js",
+        "https:/…/bootstrap.min.js",
+        "https:/…/jquery.counterup.min.js",
+        "https:/…/slick.min.js",
+        "https:/…/jquery-ui.min.js",
+        "https:/…/ent-script.min.js",
+        "https:/…/circle-progress.js",
+        "https:/…/nice-select.min.js",
+        "https:/…/isotope.pkgd.min.js",
+        "https:/…/tweenmax.min.js",
+        "https:/…/main.js",
+        "https:/…/jquery-3.6.0.min.js",
+        "https:/…/jquery.magnific-popup.min.js",
+        "https:/…/imagesloaded.pkgd.min.js"
+      ],
+      "secrets": "[REDACTED]"
+    },
+    "mail": {
+      "_risk_email_spoofing": "[REDACTED]",
+      "_risk_no_dkim": "medium",
+      "_risk_no_dmarc": "high",
+      "bimi": {
+        "found": false
+      },
+      "dkim": {
+        "found": false,
+        "selectors": []
+      },
+      "dmarc": {
+        "found": false,
+        "issues": [],
+        "policy": null,
+        "record": null
+      },
+      "email_spoofing_risk": "[REDACTED]",
+      "mta_sts": {
+        "found": false
+      },
+      "mx_records": [
+        {
+          "host": "ncbaemultan-edu-pk.mail.protection.outlook.com.",
+          "priority": 0
+        }
+      ],
+      "spf": {
+        "all_mechanism": "-all",
+        "found": true,
+        "issues": [
+          "OK: -all enforces SPF rejection"
+        ],
+        "mechanisms": [
+          "include:spf.protection.outlook.com"
+        ],
+        "record": "v=spf1 include:spf.protection.outlook.com -all"
+      }
+    },
+    "osint": {
+      "github_dorks": [
+        {
+          "query": "\"ncbaemultan.edu.pk\" password",
+          "url": "https://github.com/search?q=\"ncbaemultan.edu.pk\"+password&type=code"
+        },
+        {
+          "query": "\"ncbaemultan.edu.pk\" secret",
+          "url": "https://github.com/search?q=\"ncbaemultan.edu.pk\"+secret&type=code"
+        },
+        {
+          "query": "\"ncbaemultan.edu.pk\" api_key",
+          "url": "https://github.com/search?q=\"ncbaemultan.edu.pk\"+api_key&type=code"
+        },
+        {
+          "query": "\"ncbaemultan.edu.pk\" token",
+          "url": "https://github.com/search?q=\"ncbaemultan.edu.pk\"+token&type=code"
+        },
+        {
+          "query": "org:ncbaemultan",
+          "url": "https://github.com/search?q=org:ncbaemultan&type=code"
+        }
+      ],
+      "google_dorks": [
+        {
+          "description": "All indexed pages",
+          "query": "site:ncbaemultan.edu.pk",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk&num=100"
+        },
+        {
+          "description": "PDF documents",
+          "query": "site:ncbaemultan.edu.pk filetype:pdf",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+filetype:pdf&num=100"
+        },
+        {
+          "description": "Spreadsheets",
+          "query": "site:ncbaemultan.edu.pk filetype:xls OR filetype:xlsx",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+filetype:xls+OR+filetype:xlsx&num=100"
+        },
+        {
+          "description": "Word documents",
+          "query": "site:ncbaemultan.edu.pk filetype:doc OR filetype:docx",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+filetype:doc+OR+filetype:docx&num=100"
+        },
+        {
+          "description": "Admin pages",
+          "query": "site:ncbaemultan.edu.pk inurl:admin",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+inurl:admin&num=100"
+        },
+        {
+          "description": "Login pages",
+          "query": "site:ncbaemultan.edu.pk inurl:login",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+inurl:login&num=100"
+        },
+        {
+          "description": "Upload pages",
+          "query": "site:ncbaemultan.edu.pk inurl:upload",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+inurl:upload&num=100"
+        },
+        {
+          "description": "Directory listings",
+          "query": "site:ncbaemultan.edu.pk \"index of /\"",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+\"index+of+/\"&num=100"
+        },
+        {
+          "description": ".env files",
+          "query": "site:ncbaemultan.edu.pk ext:env",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+ext:env&num=100"
+        },
+        {
+          "description": "Log files",
+          "query": "site:ncbaemultan.edu.pk ext:log",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+ext:log&num=100"
+        },
+        {
+          "description": "SQL files",
+          "query": "site:ncbaemultan.edu.pk ext:sql",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+ext:sql&num=100"
+        },
+        {
+          "description": "Backup files",
+          "query": "site:ncbaemultan.edu.pk ext:bak OR ext:backup",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+ext:bak+OR+ext:backup&num=100"
+        },
+        {
+          "description": "phpMyAdmin",
+          "query": "site:ncbaemultan.edu.pk intitle:\"phpMyAdmin\"",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+intitle:\"phpMyAdmin\"&num=100"
+        },
+        {
+          "description": "WordPress config",
+          "query": "site:ncbaemultan.edu.pk \"wp-config.php\"",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+\"wp-config.php\"&num=100"
+        },
+        {
+          "description": "Email addresses",
+          "query": "\"@ncbaemultan.edu.pk\" email",
+          "url": "https://www.google.com/search?q=\"@ncbaemultan.edu.pk\"+email&num=100"
+        },
+        {
+          "description": "Credentials in spreadsheets",
+          "query": "\"ncbaemultan.edu.pk\" password filetype:xls",
+          "url": "https://www.google.com/search?q=\"ncbaemultan.edu.pk\"+password+filetype:xls&num=100"
+        },
+        {
+          "description": "API keys",
+          "query": "site:ncbaemultan.edu.pk \"API_KEY\" OR \"api_key\" OR \"apikey\"",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+\"API_KEY\"+OR+\"api_key\"+OR+\"apikey\"&num=100"
+        },
+        {
+          "description": "Confidential docs",
+          "query": "site:ncbaemultan.edu.pk \"confidential\" OR \"internal use only\"",
+          "url": "https://www.google.com/search?q=site:ncbaemultan.edu.pk+\"confidential\"+OR+\"internal+use+only\"&num=100"
+        },
+        {
+          "description": "Cached version",
+          "query": "cache:ncbaemultan.edu.pk",
+          "url": "https://www.google.com/search?q=cache:ncbaemultan.edu.pk&num=100"
+        },
+        {
+          "description": "Backlinks",
+          "query": "link:ncbaemultan.edu.pk",
+          "url": "https://www.google.com/search?q=link:ncbaemultan.edu.pk&num=100"
+        }
+      ],
+      "paste_exposure": {
+        "exposure_found": false,
+        "manual_checks": [
+          {
+            "name": "HaveIBeenPwned (API)",
+            "query": "Domain breach check",
+            "url": "https:/…/ncbaemultan.edu.pk"
+          },
+          {
+            "name": "IntelX",
+            "query": "Intelligence X search",
+            "url": "https://intelx.io/?s=ncbaemultan.edu.pk"
+          }
+        ],
+        "sources": []
+      },
+      "theharvester": {
+        "emails": "[REDACTED]",
+        "error": "unhashable type: 'list'",
+        "hosts": [],
+        "ips": []
+      }
+    },
+    "ssl": {
+      "cipher_info": {
+        "bits": 256,
+        "name": "TLS_AES_256_GCM_SHA384",
+        "protocol": "TLSv1.3",
+        "weak": false
+      },
+      "protocols": {
+        "TLSv1": false,
+        "TLSv1.1": false,
+        "TLSv1.2": true,
+        "TLSv1.3": true
+      }
+    },
+    "subdomains": {
+      "all_subdomains": [
+        "admission.ncbaemultan.edu.pk",
+        "cpanel.ncbaemultan.edu.pk",
+        "cpcalendars.ncbaemultan.edu.pk",
+        "cpcontacts.ncbaemultan.edu.pk",
+        "demo.ncbaemultan.edu.pk",
+        "erp.ncbaemultan.edu.pk",
+        "mail.ncbaemultan.edu.pk",
+        "student.ncbaemultan.edu.pk",
+        "webdisk.ncbaemultan.edu.pk",
+        "webmail.ncbaemultan.edu.pk",
+        "www.ncbaemultan.edu.pk"
+      ],
+      "live_hosts": [
+        {
+          "auth_indicators": [],
+          "auth_type": "none",
+          "content_type": "text/html; charset=utf-8",
+          "cookies": "[REDACTED]",
+          "final_url": "https:/…/Login?q=t3K-r5SH7gA",
+          "host": "admission.ncbaemultan.edu.pk",
+          "redirect_chain": [],
+          "redirected": false,
+          "response_size": 69384,
+          "status_code": 200,
+          "title": "NCBA&amp;E Sub Campus Multan  Admission Portal",
+          "url": "https://admission.ncbaemultan.edu.pk"
+        },
+        {
+          "auth_indicators": [],
+          "auth_type": "none",
+          "content_type": "text/html; charset=UTF-8",
+          "cookies": "[REDACTED]",
+          "final_url": "https://demo.ncbaemultan.edu.pk/",
+          "host": "demo.ncbaemultan.edu.pk",
+          "redirect_chain": [],
+          "redirected": false,
+          "response_size": 0,
+          "status_code": 200,
+          "title": "",
+          "url": "https://demo.ncbaemultan.edu.pk"
+        },
+        {
+          "auth_indicators": [],
+          "auth_type": "none",
+          "content_type": "text/html; charset=utf-8",
+          "cookies": "[REDACTED]",
+          "final_url": "https://erp.ncbaemultan.edu.pk/",
+          "host": "erp.ncbaemultan.edu.pk",
+          "redirect_chain": [],
+          "redirected": false,
+          "response_size": 524288,
+          "status_code": 200,
+          "title": "Concept ERP",
+          "url": "https://erp.ncbaemultan.edu.pk"
+        },
+        {
+          "auth_indicators": [],
+          "auth_type": "none",
+          "content_type": "text/html; charset=utf-8",
+          "cookies": "[REDACTED]",
+          "final_url": "https:/…/Login?q=t3K-r5SH7gA",
+          "host": "student.ncbaemultan.edu.pk",
+          "redirect_chain": [],
+          "redirected": false,
+          "response_size": 524288,
+          "status_code": 200,
+          "title": "NCBA&amp;E Sub Campus Multan  Student Portal",
+          "url": "https://student.ncbaemultan.edu.pk"
+        }
+      ],
+      "resolved": {
+        "admission.ncbaemultan.edu.pk": [
+          "46.225.112.194"
+        ],
+        "demo.ncbaemultan.edu.pk": [
+          "77.37.37.185"
+        ],
+        "erp.ncbaemultan.edu.pk": [
+          "46.225.112.194"
+        ],
+        "student.ncbaemultan.edu.pk": [
+          "46.225.112.194"
+        ]
+      },
+      "total_found": 11
+    },
+    "webapp": {
+      "favicon": {},
+      "meta": {
+        "description": "NCBA&E (National College of Business Administration & Economics) is one of Pakistan’s top universities, offering globally recognized programs in Business, Management, Computer Science, and Economics. ",
+        "title": "NCBA&E"
+      },
+      "pages": [
+        {
+          "auth_indicators": [
+            "api-token",
+            "session-cookie"
+          ],
+          "auth_type": "token-based API auth",
+          "content_type": "text/html; charset=UTF-8",
+          "final_url": "https://ncbaemultan.edu.pk/",
+          "forms": [
+            {
+              "action": "",
+              "has_csrf": false,
+              "has_password": "[REDACTED]",
+              "method": "get"
+            }
+          ],
+          "framework_hints": [
+            "Bootstrap",
+            "Laravel",
+            "jQuery"
+          ],
+          "is_admin_page": false,
+          "is_login_page": false,
+          "path": "/",
+          "redirect_chain": [],
+          "redirected": false,
+          "response_size": 150643,
+          "set_cookie_flags": "[REDACTED]",
+          "status_code": 200,
+          "title": "NCBA&E",
+          "url": "https://ncbaemultan.edu.pk"
+        }
+      ],
+      "robots_txt": {
+        "allowed": [
+          {
+            "path": "/",
+            "ua": "*"
+          }
+        ],
+        "disallowed": [
+          {
+            "path": "/vendor/",
+            "ua": "*"
+          },
+          {
+            "path": "/storage/",
+            "ua": "*"
+          },
+          {
+            "path": "/resources/",
+            "ua": "*"
+          },
+          {
+            "path": "/.env",
+            "ua": "*"
+          },
+          {
+            "path": "/node_modules/",
+            "ua": "*"
+          },
+          {
+            "path": "/server.php",
+            "ua": "*"
+          },
+          {
+            "path": "/package.json",
+            "ua": "*"
+          },
+          {
+            "path": "/webpack.mix.js",
+            "ua": "*"
+          },
+          {
+            "path": "/artisan",
+            "ua": "*"
+          },
+          {
+            "path": "/.git/",
+            "ua": "*"
+          },
+          {
+            "path": "/composer.json",
+            "ua": "*"
+          },
+          {
+            "path": "/composer.lock",
+            "ua": "*"
+          },
+          {
+            "path": "/readme.md",
+            "ua": "*"
+          },
+          {
+            "path": "/public/storage/",
+            "ua": "*"
+          }
+        ],
+        "raw": "User-agent: *\r\nDisallow: /vendor/\r\nDisallow: /storage/\r\nDisallow: /resources/\r\nDisallow: /.env\r\nDisallow: /node_modules/\r\nDisallow: /server.php\r\nDisallow: /package.json\r\nDisallow: /webpack.mix.js\r\nDisallow: /artisan\r\nDisallow: /.git/\r\nDisallow: /composer.json\r\nDisallow: /composer.lock\r\nDisallow: /readme.md\r\nDisallow: /public/storage/\r\n\r\nAllow: /\r\n\r\nSitemap: https://demo.ncbaemultan.edu.pk/sitemap.xml\r\n",
+        "sitemaps": [
+          "https://demo.ncbaemultan.edu.pk/sitemap.xml"
+        ],
+        "user_agents": [
+          "*"
+        ]
+      },
+      "sitemap": {
+        "total_urls": 0,
+        "urls": []
+      },
+      "technologies": [
+        "jQuery",
+        "Bootstrap",
+        "Laravel"
+      ]
+    },
+    "whois": {
+      "created": "2017-04-10T00:00:00+00:00",
+      "domain": "ncbaemultan.edu.pk",
+      "error": "can't subtract offset-naive and offset-aware datetimes",
+      "expires": "2027-04-10T00:00:00+00:00",
+      "name_servers": [
+        "dorthy.ns.cloudflare.com",
+        "nolan.ns.cloudflare.com"
+      ],
+      "registrant": "[REDACTED]",
+      "registrant_email": "[REDACTED]",
+      "registrar": "Unknown",
+      "status": [
+        "Domain is Registered"
+      ],
+      "updated": null
+    }
+  },
+  "meta": {
+    "cancelled": false,
+    "detail_level": "standard",
+    "elapsed_seconds": 70.29,
+    "end_time": "2026-07-31T11:18:23.400010+00:00",
+    "mode": "passive",
+    "modules_run": [
+      "dns",
+      "ip",
+      "whois",
+      "http",
+      "ssl",
+      "osint",
+      "cve",
+      "javascript",
+      "mail",
+      "webapp",
+      "subdomains"
+    ],
+    "modules_skipped": [
+      "api",
+      "database",
+      "honeypot",
+      "siem",
+      "websocket"
+    ],
+    "results_trusted": true,
+    "session_id": "00bb9e95",
+    "start_time": "2026-07-31T11:17:13.113912+00:00",
+    "target": "ncbaemultan.edu.pk",
+    "tls_verified": true
+  },
+  "normalized_findings": [],
+  "reports": [
+    "webosint_ncbaemultan_edu_pk_20260731_161823.json"
+  ],
+  "summary": {
+    "duplicates_merged": 0,
+    "errors": 0,
+    "mode": "passive",
+    "modules_run": 11,
+    "modules_skipped": [
+      "api",
+      "database",
+      "honeypot",
+      "siem",
+      "websocket"
+    ],
+    "results_trusted": true,
+    "session_id": "00bb9e95",
+    "severity_counts": {
+      "critical": 0,
+      "high": 0,
+      "info": 0,
+      "low": 0,
+      "medium": 0
+    },
+    "target": "ncbaemultan.edu.pk",
+    "total_findings": 55,
+    "unique_findings": 0
+  },
+  "warnings": []
+}

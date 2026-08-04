@@ -1,0 +1,141 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual environments ──────────────────────────────────────────────────
+.venv/
+venv/
+ENV/
+env/
+.env.bak
+virtualenv/
+pyvenv.cfg
+
+# ── Dependency folders ────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+bower_components/
+
+# ── Caches ────────────────────────────────────────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+.pytype/
+.cache/
+.tox/
+.nox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# ── Credentials and secrets (never commit) ────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+secrets.json
+secrets.yaml
+.netrc
+.aws/
+.ssh/
+api_keys.txt
+
+# ── Scan output and generated artifacts ───────────────────────────────────
+# NOTE: reports/ also holds the report-writer source code, so ignore only the
+# generated output inside it rather than the whole package.
+reports/*.json
+reports/*.html
+reports/*.md
+reports/*.csv
+reports/*.xml
+reports/*.docx
+reports/*.pdf
+reports/web/
+!reports/__init__.py
+output/
+outputs/
+results/
+scans/
+artifacts/
+webosint_*.json
+webosint_*.html
+webosint_*.md
+
+# ── Logs ──────────────────────────────────────────────────────────────────
+logs/
+*.log
+*.jsonl
+audit.log
+
+# ── Databases ─────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+database/*.db
+
+# ── Archives ──────────────────────────────────────────────────────────────
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ── Temporary files ───────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+webosint_*.tmp
+
+# ── Tool wordlists and downloaded data (keep the bundled defaults) ────────
+nuclei-templates/
+*.nuclei
+
+# ── Editors and IDEs ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+.claude/
+*.sublime-project
+*.sublime-workspace
+
+# ── OS files ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini

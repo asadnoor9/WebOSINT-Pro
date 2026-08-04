@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan {{ job.target }} - WebOSINT Pro</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+ :root{--bg:#0f1419;--panel:#171d24;--line:#2a333d;--fg:#e6edf3;--dim:#8b98a5;
+       --accent:#3fb950;--warn:#d29922;--danger:#f85149;}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);
+      font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+ .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 64px}
+ a{color:var(--accent)}
+ h1{margin:0 0 4px;font-size:20px}
+ h2{font-size:15px;margin:0 0 14px}
+ .sub{color:var(--dim);margin:0 0 22px}
+ .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+       padding:20px;margin-bottom:18px}
+ .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
+ .running{background:rgba(210,153,34,.15);color:var(--warn)}
+ .done{background:rgba(63,185,80,.15);color:var(--accent)}
+ .failed,.cancelled{background:rgba(248,81,73,.15);color:var(--danger)}
+ .queued{background:rgba(139,152,165,.15);color:var(--dim)}
+ table{width:100%;border-collapse:collapse;font-size:13px}
+ th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+ th{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+ .sev{font-weight:700;font-size:11px;padding:1px 7px;border-radius:4px}
+ .critical{background:rgba(248,81,73,.2);color:#ff9d97}
+ .high{background:rgba(217,95,2,.2);color:#ffb787}
+ .medium{background:rgba(210,153,34,.2);color:#ffd873}
+ .low{background:rgba(63,185,80,.2);color:#89e0a0}
+ .info{background:rgba(139,152,165,.18);color:var(--dim)}
+ .dl{display:inline-block;margin:4px 8px 4px 0;padding:8px 14px;background:#0d1117;
+     border:1px solid var(--line);border-radius:6px;text-decoration:none;color:var(--fg)}
+ .dl:hover{border-color:var(--accent)}
+ .view{border-color:rgba(63,185,80,.5)}
+ .muted{color:var(--dim)}
+ button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:6px;
+        padding:7px 14px;cursor:pointer;font:inherit}
+ button:hover{border-color:var(--accent);color:var(--fg)}
+ .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+ .stat{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center}
+ .stat b{display:block;font-size:22px}
+ .bar{height:9px;background:#0d1117;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+ .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+ .rowsplit{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+ .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}
+ .kv dt{color:var(--dim)}
+ .kv dd{margin:0;word-break:break-word}
+ .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+ pre.log{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:12px;
+     max-height:320px;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+     margin:0;white-space:pre-wrap}
+ .lvl-ERROR{color:#ff9d97}.lvl-WARNING{color:#ffd873}.lvl-DEBUG,.lvl-TRACE{color:var(--dim)}
+ .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub"><a href="/">&larr; New scan</a> &middot; <a href="/jobs">All scans</a></p>
+  <h1>{{ job.target }} <span class="pill {{ job.status }}" id="status">{{ job.status }}</span></h1>
+  <p class="sub">{{ job.mode }} mode &middot; {{ job.speed }} speed &middot; started {{ job.started }}
+    <span id="finished">{% if job.finished %}&middot; finished {{ job.finished }}{% endif %}</span></p>
+
+  {% if job.message %}<div class="card muted">{{ job.message }}</div>{% endif %}
+
+  <div class="card" id="progress-card">
+    <div class="rowsplit">
+      <b id="phase">Starting...</b>
+      <span class="muted" id="counter"></span>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <p class="muted" style="margin:10px 0 0" id="active-mods"></p>
+    <form method="post" action="/scan/{{ job.id }}/cancel" id="cancel-form" style="margin-top:12px">
+      <button type="submit">Cancel scan</button>
+    </form>
+    <p class="muted" style="margin:10px 0 0">
+      This scan runs in the background. You can close this tab and reopen it from
+      <a href="/jobs">All scans</a>.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="rowsplit">
+      <h2 style="margin:0">Live log</h2>
+      <span class="tag">verbosity {{ job.verbosity }}</span>
+    </div>
+    <pre class="log" id="log">Waiting for output...</pre>
+  </div>
+
+  <div id="output" {% if job.status in ['queued','running'] %}style="display:none"{% endif %}>
+    <div class="card">
+      <h2>Risk summary</h2>
+      <div class="cards" id="summary"></div>
+    </div>
+
+    <div class="card">
+      <h2>Reports</h2>
+      <div id="downloads"><span class="muted">No files yet.</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Host and infrastructure</h2>
+      <div class="grid2">
+        <div>
+          <h3 style="font-size:13px;color:var(--dim);margin:0 0 8px">Network and hosting</h3>
+          <dl class="kv" id="net"></dl>
+        </div>
+        <div>
+          <h3 style="font-size:13px;color:var(--dim);margin:0 0 8px">Web server</h3>
+          <dl class="kv" id="websrv"></dl>
+          <h3 style="font-size:13px;color:var(--dim);margin:16px 0 8px">Operating system</h3>
+          <dl class="kv" id="osinfo"></dl>
+        </div>
+      </div>
+      <h3 style="font-size:13px;color:var(--dim);margin:18px 0 8px">Exposed ports and services</h3>
+      <table><thead><tr><th>Port</th><th>Proto</th><th>State</th><th>Service</th>
+        <th>Product</th><th>Version</th></tr></thead>
+        <tbody id="services"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Findings</h2>
+      <table><thead><tr><th>Severity</th><th>Title</th><th>Value</th><th>Module</th><th>Sources</th></tr></thead>
+        <tbody id="findings"><tr><td colspan="5" class="muted">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOB="{{ job.id }}";
+const SEV=["critical","high","medium","low","info"];
+let logOffset=0;
+function esc(s){const d=document.createElement("div");d.textContent=(s==null?"":String(s));return d.innerHTML;}
+function flat(v){
+  if(Array.isArray(v))return v.map(flat).join("; ");
+  if(v&&typeof v==="object")return Object.entries(v).map(([k,x])=>k+"="+flat(x)).join("; ");
+  return v==null?"":String(v);
+}
+function yn(v){return v?"yes":"no";}
+function kv(el,pairs){
+  const html=pairs.filter(p=>p[1]!==""&&p[1]!=null)
+    .map(p=>"<dt>"+esc(p[0])+"</dt><dd>"+esc(p[1])+"</dd>").join("");
+  el.innerHTML=html||'<dd class="muted">Not determined.</dd>';
+}
+function renderLogs(d){
+  const box=document.getElementById("log");
+  if(d.logs&&d.logs.length){
+    if(logOffset===0)box.textContent="";
+    const stick=box.scrollTop+box.clientHeight>=box.scrollHeight-30;
+    for(const line of d.logs){
+      const span=document.createElement("span");
+      span.className="lvl-"+line.level;
+      span.textContent=line.time+"  "+line.message+"\n";
+      box.appendChild(span);
+    }
+    logOffset=d.log_total;
+    if(stick)box.scrollTop=box.scrollHeight;
+  }
+}
+function renderProgress(d){
+  const p=d.progress||{};
+  const busy=(d.status==="queued"||d.status==="running");
+  document.getElementById("bar").style.width=(p.percent||0)+"%";
+  document.getElementById("counter").textContent=
+    (p.completed||0)+" / "+(p.total||0)+" modules  "+(p.elapsed||0)+"s";
+  document.getElementById("phase").textContent=
+    busy?((p.percent||0).toFixed(0)+"% complete"):("Scan "+d.status);
+  const running=(p.running||[]);
+  document.getElementById("active-mods").textContent=
+    running.length?("Running: "+running.join(", ")):"";
+  document.getElementById("cancel-form").style.display=busy?"":"none";
+}
+function renderInfra(d){
+  const i=d.infrastructure||{};
+  const n=i.network||{},w=i.web_server||{},o=i.operating_system||{};
+  kv(document.getElementById("net"),[
+    ["IP address",n.primary_ip],["All addresses",(n.resolved_ips||[]).join(", ")],
+    ["IP version",n.ip_version],["ISP",n.isp],["Organization",n.organization],
+    ["ASN",n.asn],["Country",n.country],["Region",n.region],["City",n.city],
+    ["Timezone",n.timezone],["Latency",n.latency],
+    ["Hosting provider",n.primary_ip?yn(n.hosting_provider):""],
+    ["Proxy or VPN",n.primary_ip?yn(n.proxy_or_vpn):""],
+    ["Blacklisted",n.primary_ip?yn(n.blacklisted):""]]);
+  kv(document.getElementById("websrv"),[
+    ["Product",w.product],["Version",w.version||"not disclosed"],
+    ["Raw banner",w.banner],["Powered by",w.powered_by],
+    ["CDN or proxy",(w.cdn||[]).join(", ")],
+    ["Technologies",(w.technologies||[]).join(", ")],
+    ["Status code",w.status_code],["Final URL",w.final_url]]);
+  kv(document.getElementById("osinfo"),[
+    ["Best guess",o.best_guess||"unknown"],["Device type",o.device_type],
+    ["Detected by",o.source],["Other guesses",(o.guesses||[]).slice(1,5).join(" | ")],
+    ["Note",o.note]]);
+  const svc=(i.services||[]).map(s=>
+    "<tr><td>"+esc(s.port)+(s.common_name?' <span class="tag">'+esc(s.common_name)+"</span>":"")+
+    "</td><td>"+esc(s.protocol)+"</td><td>"+esc(s.state)+"</td><td>"+esc(s.service)+
+    "</td><td>"+esc(s.product)+"</td><td>"+esc(s.version)+"</td></tr>");
+  document.getElementById("services").innerHTML=svc.length?svc.join(""):
+    '<tr><td colspan="6" class="muted">No port data. Port scanning needs active mode.</td></tr>';
+}
+function render(d){
+  document.getElementById("status").className="pill "+d.status;
+  document.getElementById("status").textContent=d.status;
+  if(d.finished)document.getElementById("finished").innerHTML="&middot; finished "+esc(d.finished);
+  renderProgress(d);
+  renderLogs(d);
+  const busy=(d.status==="queued"||d.status==="running");
+  document.getElementById("output").style.display=busy?"none":"";
+  if(busy)return false;
+
+  const counts=d.summary.severity_counts||d.summary.risk_counts||{};
+  document.getElementById("summary").innerHTML=
+    '<div class="stat"><b>'+(d.summary.total_findings||0)+'</b>total</div>'+
+    SEV.map(s=>'<div class="stat"><b>'+(counts[s]||0)+'</b>'+s+'</div>').join("");
+
+  if(d.artifacts&&d.artifacts.length){
+    document.getElementById("downloads").innerHTML=d.artifacts.map(a=>{
+      const size=' <span class="muted">('+(a.size/1024).toFixed(1)+' KB)</span>';
+      const open=a.viewable?'<a class="dl view" target="_blank" rel="noopener" href="/view/'+
+        JOB+'/'+a.index+'">Open '+esc(a.ext.toUpperCase())+'</a>':"";
+      return open+'<a class="dl" href="/download/'+JOB+'/'+a.index+'">Download '+
+        esc(a.name)+size+'</a>';
+    }).join("");
+  }else{
+    document.getElementById("downloads").innerHTML=
+      '<span class="muted">No files were produced. Pick at least one output format.</span>';
+  }
+
+  renderInfra(d);
+
+  const rows=(d.findings||[]).map(f=>{
+    const s=(f.severity||"info").toLowerCase();
+    return '<tr><td><span class="sev '+s+'">'+esc(s.toUpperCase())+'</span></td><td>'+
+      esc(f.title)+'</td><td>'+esc(flat(f.value).slice(0,300))+'</td><td>'+
+      esc(f.module||"")+'</td><td>'+esc((f.sources||[]).join("+"))+'</td></tr>';
+  });
+  if(d.errors&&Object.keys(d.errors).length){
+    for(const [m,msg] of Object.entries(d.errors))
+      rows.push('<tr><td><span class="sev info">ERROR</span></td><td>'+esc(m)+
+        '</td><td colspan="3">'+esc(msg)+'</td></tr>');
+  }
+  document.getElementById("findings").innerHTML=rows.length?rows.join(""):
+    '<tr><td colspan="5" class="muted">No findings.</td></tr>';
+  return true;
+}
+async function poll(){
+  try{
+    const r=await fetch("/api/scan/"+JOB+"?log_offset="+logOffset,{cache:"no-store"});
+    if(!r.ok)return;
+    const done=render(await r.json());
+    if(!done)setTimeout(poll,1200);
+  }catch(e){setTimeout(poll,3000);}
+}
+poll();
+</script>
+</body>
+</html>

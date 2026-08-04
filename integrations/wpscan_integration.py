@@ -3,24 +3,28 @@ WebOSINT Pro - WPScan Integration
 WordPress vulnerability scanner.
 """
 
-import subprocess
-import shutil
 import json
+import shutil
+from pathlib import Path
+
+from core.safe_exec import SafeRunner
 
 
 class WPScanIntegration:
     def __init__(self, config, logger):
+        self.runner = SafeRunner(safety=getattr(self, "safety", None))
         self.cfg = config
         self.logger = logger
 
     def is_wordpress(self, target):
         """Quick check if target is WordPress."""
         import requests
+
         try:
-            r = requests.get(f"https://{target}/wp-login.php", timeout=10, verify=False)
-            if r and ('wordpress' in r.text.lower() or 'wp-login' in r.text.lower()):
+            r = requests.get(f"https://{target}/wp-login.php", timeout=10)
+            if r and ("wordpress" in r.text.lower() or "wp-login" in r.text.lower()):
                 return True
-            r2 = requests.get(f"https://{target}/wp-includes/js/wp-emoji.js", timeout=5, verify=False)
+            r2 = requests.get(f"https://{target}/wp-includes/js/wp-emoji.js", timeout=5)
             if r2 and r2.status_code == 200:
                 return True
         except Exception:
@@ -28,58 +32,65 @@ class WPScanIntegration:
         return False
 
     def run(self):
-        if not shutil.which('wpscan'):
-            return {'error': 'wpscan not installed', 'install': 'gem install wpscan'}
+        if not shutil.which("wpscan"):
+            return {"error": "wpscan not installed", "install": "gem install wpscan"}
 
         if not self.is_wordpress(self.cfg.target):
-            return {'skip': 'Target does not appear to be WordPress'}
+            return {"skip": "Target does not appear to be WordPress"}
 
         results = {}
-        out_file = '/tmp/wpscan_out.json'
+        out_file = self.cfg.get_temp_file(".wpscan.json")
 
         cmd = [
-            'wpscan',
-            '--url', f"https://{self.cfg.target}",
-            '--format', 'json',
-            '--output', out_file,
-            '--no-banner',
+            "wpscan",
+            "--url",
+            f"https://{self.cfg.target}",
+            "--format",
+            "json",
+            "--output",
+            out_file,
+            "--no-banner",
         ]
 
         if self.cfg.aggressive:
-            cmd.extend(['--enumerate', 'p,t,u', '--plugins-detection', 'aggressive'])
+            cmd.extend(["--enumerate", "p,t,u", "--plugins-detection", "aggressive"])
         else:
-            cmd.extend(['--enumerate', 'p,t', '--plugins-detection', 'passive'])
+            cmd.extend(["--enumerate", "p,t", "--plugins-detection", "passive"])
 
-        self.logger.info(f"[wpscan] Scanning WordPress target")
+        self.logger.info("[wpscan] Scanning WordPress target")
 
         try:
-            subprocess.run(cmd, timeout=180, capture_output=True)
+            self.runner.run(cmd, timeout=180)
             with open(out_file) as f:
                 data = json.load(f)
 
-            results['version'] = data.get('version', {})
-            results['interesting_findings'] = data.get('interesting_findings', [])
-            results['plugins'] = list(data.get('plugins', {}).keys())
-            results['themes'] = list(data.get('main_theme', {}).get('name', ''))
-            results['users'] = data.get('users', {})
-            results['vulnerabilities'] = []
+            results["version"] = data.get("version", {})
+            results["interesting_findings"] = data.get("interesting_findings", [])
+            results["plugins"] = list(data.get("plugins", {}).keys())
+            results["themes"] = list(data.get("main_theme", {}).get("name", ""))
+            results["users"] = data.get("users", {})
+            results["vulnerabilities"] = []
 
             # Extract plugin vulns
-            for plugin, info in data.get('plugins', {}).items():
-                for vuln in info.get('vulnerabilities', []):
-                    results['vulnerabilities'].append({
-                        'plugin': plugin,
-                        'title': vuln.get('title', ''),
-                        'cvss': vuln.get('cvss', {}).get('score'),
-                        'cve': vuln.get('references', {}).get('cve', []),
-                        'fixed_in': vuln.get('fixed_in', ''),
-                    })
+            for plugin, info in data.get("plugins", {}).items():
+                for vuln in info.get("vulnerabilities", []):
+                    results["vulnerabilities"].append(
+                        {
+                            "plugin": plugin,
+                            "title": vuln.get("title", ""),
+                            "cvss": vuln.get("cvss", {}).get("score"),
+                            "cve": vuln.get("references", {}).get("cve", []),
+                            "fixed_in": vuln.get("fixed_in", ""),
+                        }
+                    )
 
         except FileNotFoundError:
-            results['note'] = 'wpscan output not found'
-        except subprocess.TimeoutExpired:
-            results['error'] = 'wpscan timed out'
+            results["note"] = "wpscan output not found"
+        except OSError:
+            results["error"] = "wpscan timed out"
         except Exception as e:
-            results['error'] = str(e)
+            results["error"] = str(e)
+        finally:
+            Path(out_file).unlink(missing_ok=True)
 
         return results

@@ -1,0 +1,9 @@
+profile: aggressive
+threads: 25
+timeout: 8
+delay: 0.0
+rate_limit: 200
+passive_only: false
+aggressive: true
+stealth: false
+randomize_order: false

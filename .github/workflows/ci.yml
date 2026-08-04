@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install lint tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[all]' -r requirements-dev.txt
+
+      # The suite is offline by design: no external reconnaissance is performed.
+      - name: Run tests
+        run: pytest -q --maxfail=1
+
+  secrets-scan:
+    name: Secret and artifact hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if generated artifacts are tracked
+        run: |
+          set -e
+          bad=$(git ls-files \
+            | grep -vE '\.py$' \
+            | grep -E '(^|/)(venv|\.venv|node_modules|logs)/|\.(log|jsonl|db|sqlite3?|zip)$|(^|/)\.env$|^reports/.*\.(json|html|md|csv|xml)$' \
+            || true)
+          if [ -n "$bad" ]; then
+            echo "Tracked files that must not be committed:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Fail if an obvious secret is committed
+        run: |
+          set -e
+          hits=$(git grep -nIE '(AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.)' -- . ':!.env.example' ':!tests' || true)
+          if [ -n "$hits" ]; then
+            echo "Possible secret detected:"
+            echo "$hits"
+            exit 1
+          fi

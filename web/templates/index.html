@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebOSINT Pro</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+ :root{--bg:#0f1419;--panel:#171d24;--line:#2a333d;--fg:#e6edf3;--dim:#8b98a5;
+       --accent:#3fb950;--warn:#d29922;--danger:#f85149;}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);
+      font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+ .wrap{max-width:980px;margin:0 auto;padding:32px 20px 64px}
+ h1{margin:0 0 4px;font-size:22px}
+ h2{font-size:15px;margin:0 0 14px;color:var(--fg)}
+ .sub{color:var(--dim);margin:0 0 24px}
+ .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+       padding:20px;margin-bottom:18px}
+ label{display:block;margin-bottom:6px;color:var(--dim);font-size:12.5px;
+       text-transform:uppercase;letter-spacing:.04em}
+ input[type=text],input[type=number],select{width:100%;padding:9px 11px;
+       background:#0d1117;border:1px solid var(--line);border-radius:6px;
+       color:var(--fg);font-size:14px}
+ input:focus,select:focus{outline:none;border-color:var(--accent)}
+ .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+ .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+ .field{margin-bottom:16px}
+ .check{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px}
+ .check input{margin-top:3px}
+ .check label{margin:0;text-transform:none;letter-spacing:0;font-size:13.5px;
+              color:var(--fg)}
+ .check .hint{display:block;color:var(--dim);font-size:12px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+ .mod{border:1px solid var(--line);border-radius:6px;padding:9px 11px;background:#0d1117}
+ .tag{font-size:10px;padding:1px 6px;border-radius:20px;margin-left:6px;
+      vertical-align:middle}
+ .tag.p{background:rgba(63,185,80,.15);color:var(--accent)}
+ .tag.a{background:rgba(210,153,34,.15);color:var(--warn)}
+ .banner{border-left:3px solid var(--warn);background:rgba(210,153,34,.08);
+         padding:12px 14px;border-radius:0 6px 6px 0;margin-bottom:18px;font-size:13px}
+ .err{border-left:3px solid var(--danger);background:rgba(248,81,73,.09);
+      padding:12px 14px;border-radius:0 6px 6px 0;margin-bottom:18px;color:#ffb4ae}
+ button{background:var(--accent);color:#04170a;border:0;border-radius:6px;
+        padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer}
+ button:hover{filter:brightness(1.08)}
+ .recent a{color:var(--accent);text-decoration:none}
+ .recent li{margin-bottom:5px;color:var(--dim)}
+ details summary{cursor:pointer;color:var(--dim);margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WebOSINT Pro</h1>
+  <p class="sub">Passive-first reconnaissance. Authorized targets only.</p>
+
+  <div class="banner">
+    <strong>Authorized use only.</strong> Only scan systems you own or hold
+    written permission to test. Passive modules still generate DNS, WHOIS and
+    HTTP traffic; active modules are intrusive and appear in the target's logs.
+  </div>
+
+  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/scan">
+
+    <div class="card">
+      <h2>Target and authorization</h2>
+      <div class="row">
+        <div class="field">
+          <label for="target">Target domain or IP</label>
+          <input type="text" id="target" name="target" placeholder="example.com"
+                 autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="confirm_target">Confirm target (retype)</label>
+          <input type="text" id="confirm_target" name="confirm_target"
+                 placeholder="example.com" autocomplete="off" required>
+        </div>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="authorized" name="authorized" required>
+        <label for="authorized">I have explicit written authorization to test this target.
+          <span class="hint">Required. The scan will not start without it.</span></label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="active" name="active">
+        <label for="active">Enable active modules
+          <span class="hint">Intrusive: port scanning, directory brute force, WAF and
+            vulnerability probing. Leave off for passive OSINT.</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Scan options</h2>
+      <div class="row3">
+        <div class="field">
+          <label for="profile">Profile</label>
+          <select id="profile" name="profile">
+            {% for p in profiles %}
+            <option value="{{ p }}" {% if p == 'safe' %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="detail">Data detail</label>
+          <select id="detail" name="detail">
+            <option value="minimal">minimal - drops PII</option>
+            <option value="standard" selected>standard</option>
+            <option value="detailed">detailed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="retention_days">Keep reports (days)</label>
+          <input type="number" id="retention_days" name="retention_days" value="30" min="0">
+        </div>
+      </div>
+
+      <div class="row3">
+        <div class="field">
+          <label for="speed">Scan speed</label>
+          <select id="speed" name="speed">
+            {% for s in speeds %}
+            <option value="{{ s.key }}" {% if s.key == default_speed %}selected{% endif %}>{{ s.label }} - {{ s.hint }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="verbosity">Log verbosity</label>
+          <select id="verbosity" name="verbosity">
+            {% for v in verbosities %}
+            <option value="{{ v.key }}" {% if v.key == default_verbosity %}selected{% endif %}>{{ v.label }} - {{ v.hint }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Execution</label>
+          <p class="hint" style="margin:7px 0 0">Scans run in the background. Close the tab
+            any time and reopen it from <a href="/jobs">All scans</a>.</p>
+        </div>
+      </div>
+
+      <details>
+        <summary>Advanced (threads, timeout, rate limit, TLS)</summary>
+        <div class="row3">
+          <div class="field">
+            <label for="threads">Threads</label>
+            <input type="number" id="threads" name="threads" min="1" max="50"
+                   placeholder="profile default">
+          </div>
+          <div class="field">
+            <label for="timeout">Timeout (s)</label>
+            <input type="number" id="timeout" name="timeout" min="1" max="120"
+                   placeholder="profile default">
+          </div>
+          <div class="field">
+            <label for="rate_limit">Rate limit (req/min)</label>
+            <input type="number" id="rate_limit" name="rate_limit" min="1" max="500"
+                   placeholder="profile default">
+          </div>
+        </div>
+        <div class="check">
+          <input type="checkbox" id="allow_private" name="allow_private">
+          <label for="allow_private">Allow private / localhost targets
+            <span class="hint">Lab use only.</span></label>
+        </div>
+        <div class="check">
+          <input type="checkbox" id="insecure_tls" name="insecure_tls">
+          <label for="insecure_tls">Disable TLS verification
+            <span class="hint">Every finding is then marked UNTRUSTED.</span></label>
+        </div>
+        <div class="check">
+          <input type="checkbox" id="keep_raw" name="keep_raw">
+          <label for="keep_raw">Keep raw HTTP responses and headers
+            <span class="hint">Off by default for privacy.</span></label>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>Modules <span style="color:var(--dim);font-weight:400">(none selected = all allowed)</span></h2>
+      <div class="grid">
+        {% for m in modules %}
+        <div class="mod">
+          <div class="check" style="margin:0">
+            <input type="checkbox" id="m_{{ m.name }}" name="modules" value="{{ m.name }}">
+            <label for="m_{{ m.name }}">{{ m.name }}
+              {% if m.active %}<span class="tag a">active</span>
+              {% else %}<span class="tag p">passive</span>{% endif %}
+              <span class="hint">{{ m.desc }}</span>
+            </label>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Output formats</h2>
+      {% for value, label, hint in formats %}
+      <div class="check">
+        <input type="checkbox" id="f_{{ value }}" name="formats" value="{{ value }}"
+               {% if value == 'json' or value == 'html' %}checked{% endif %}>
+        <label for="f_{{ value }}">{{ label }}<span class="hint">{{ hint }}</span></label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit">Start scan</button>
+  </form>
+
+  {% if jobs %}
+  <div class="card recent" style="margin-top:24px">
+    <h2>Recent scans <a href="/jobs" style="font-size:12px;font-weight:400">view all</a></h2>
+    <ul>
+      {% for j in jobs %}
+      <li><a href="/scan/{{ j.id }}">{{ j.target }}</a> - {{ j.mode }} - {{ j.status }} - {{ j.started }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

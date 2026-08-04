@@ -1,0 +1,8 @@
+services:
+  webosint:
+    build: .
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ./configs:/app/configs
+    command: ["--help"]

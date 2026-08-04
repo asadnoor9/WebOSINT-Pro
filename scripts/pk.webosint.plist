@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WebOSINT Pro - macOS LaunchDaemon
+
+  Install:
+    sudo cp scripts/pk.webosint.plist /Library/LaunchDaemons/
+    sudo chown root:wheel /Library/LaunchDaemons/pk.webosint.plist
+    sudo chmod 644 /Library/LaunchDaemons/pk.webosint.plist
+    sudo launchctl load -w /Library/LaunchDaemons/pk.webosint.plist
+
+  Manage:
+    sudo launchctl start  pk.webosint
+    sudo launchctl stop   pk.webosint
+    sudo launchctl unload -w /Library/LaunchDaemons/pk.webosint.plist
+
+  Replace __WORKDIR__, __PYTHON__ and __USER__ before installing.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>pk.webosint</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PYTHON__</string>
+        <string>__WORKDIR__/webserve.py</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>8000</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__WORKDIR__</string>
+
+    <key>UserName</key>
+    <string>__USER__</string>
+
+    <!-- Start at boot and restart automatically after a crash. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+        <key>WEBOSINT_RUNTIME_DIR</key>
+        <string>__WORKDIR__/.runtime</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__WORKDIR__/logs/webosint.log</string>
+    <key>StandardErrorPath</key>
+    <string>__WORKDIR__/logs/webosint.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
