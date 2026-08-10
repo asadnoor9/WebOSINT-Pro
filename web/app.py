@@ -28,7 +28,7 @@ from typing import Any
 from core.cli import MODULE_HELP, parse_args
 from core.config import ACTIVE_MODULES, PROFILE_SETTINGS, Config
 from core.logger import setup_logger
-from core.paths import reports_dir
+from core.paths import ensure_all, reports_dir
 from core.redaction import DetailLevel, Redactor
 from core.retention import RetentionPolicy
 from core.safety import SafetyController, SafetyPolicy, normalize_host
@@ -402,6 +402,10 @@ def create_app(auth_token: str | None = None) -> Any:
 
     app = Flask(__name__)
     app.secret_key = secrets.token_hex(16)
+    # output/ is git-ignored, so a fresh checkout has no reports, logs or
+    # cache directory. Create them once at startup rather than letting the
+    # first scan fail on a missing path.
+    ensure_all()
 
     modules = [
         {"name": name, "desc": desc, "active": name in ACTIVE_MODULES}
@@ -549,7 +553,13 @@ def create_app(auth_token: str | None = None) -> Any:
         if job is None or index < 0 or index >= len(job.artifacts):
             abort(404)
         # Serve only paths this job registered - never a user-supplied path.
-        return job.artifacts[index]
+        artifact = job.artifacts[index]
+        # The file may be gone: retention pruned it, output/ was cleaned, or
+        # the checkout was replaced. Job state is in memory and outlives the
+        # files, so report a stale link as 404 instead of a 500 crash page.
+        if not os.path.isfile(artifact["path"]):
+            abort(404)
+        return artifact
 
     @app.get("/download/<job_id>/<int:index>")
     def download(job_id: str, index: int):

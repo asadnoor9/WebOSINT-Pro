@@ -89,7 +89,7 @@ if (-not (Test-Path $python)) {
     $python = $resolved.Source
 }
 
-$logDirectory = Join-Path $repoRoot 'logs'
+$logDirectory = Join-Path $repoRoot 'output/logs'
 New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
 
 if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {

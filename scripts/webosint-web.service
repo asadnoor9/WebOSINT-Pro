@@ -15,6 +15,7 @@ User=__USER__
 Group=__GROUP__
 WorkingDirectory=__WORKDIR__
 Environment=PYTHONUNBUFFERED=1
+Environment=WEBOSINT_OUTPUT_DIR=__WORKDIR__/output
 EnvironmentFile=-__WORKDIR__/.env
 ExecStart=__PYTHON__ __WORKDIR__/webserve.py __ARGS__
 Restart=on-failure
@@ -26,8 +27,10 @@ KillSignal=SIGTERM
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ProtectHome=read-only
-ReadWritePaths=__WORKDIR__/reports __WORKDIR__/logs
+# Not read-only: the project normally lives under the operator's home, and a
+# read-only /home makes the working directory unwritable (status=226/NAMESPACE).
+ProtectHome=no
+ReadWritePaths=__WORKDIR__/output
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

@@ -58,9 +58,9 @@
     </dict>
 
     <key>StandardOutPath</key>
-    <string>__WORKDIR__/logs/webosint.log</string>
+    <string>__WORKDIR__/output/logs/webosint.log</string>
     <key>StandardErrorPath</key>
-    <string>__WORKDIR__/logs/webosint.err</string>
+    <string>__WORKDIR__/output/logs/webosint.err</string>
 
     <key>ProcessType</key>
     <string>Background</string>

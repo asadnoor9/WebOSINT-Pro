@@ -68,8 +68,9 @@ fi
 
 # Every ReadWritePaths entry must exist before systemd builds the namespace,
 # otherwise the unit fails with status=226/NAMESPACE.
-mkdir -p "${WORKDIR}/reports" "${WORKDIR}/logs" "${RUNTIME_DIR}"
-chown -R "${RUN_USER}:${RUN_GROUP}" "${WORKDIR}/reports" "${WORKDIR}/logs" "${RUNTIME_DIR}"
+mkdir -p "${WORKDIR}/output/reports" "${WORKDIR}/output/logs" \
+         "${WORKDIR}/output/cache" "${RUNTIME_DIR}"
+chown -R "${RUN_USER}:${RUN_GROUP}" "${WORKDIR}/output" "${RUNTIME_DIR}"
 chmod 700 "${RUNTIME_DIR}"
 
 # Retire the old web-only unit if a previous version installed it, so the two

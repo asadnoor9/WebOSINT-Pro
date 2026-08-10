@@ -28,6 +28,9 @@ Environment=PYTHONUNBUFFERED=1
 # working directory and the runtime dir lands somewhere unexpected.
 Environment=HOME=__HOME__
 Environment=WEBOSINT_RUNTIME_DIR=__RUNTIME_DIR__
+# All generated reports, logs and caches live under output/. Setting this
+# explicitly keeps them inside the single directory ReadWritePaths grants.
+Environment=WEBOSINT_OUTPUT_DIR=__WORKDIR__/output
 ExecStart=__PYTHON__ __WORKDIR__/webserve.py __ARGS__
 ExecReload=/bin/kill -HUP $MAINPID
 
@@ -60,7 +63,7 @@ ProtectHome=no
 ProtectKernelTunables=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true
-ReadWritePaths=__WORKDIR__/reports __WORKDIR__/logs __RUNTIME_DIR__
+ReadWritePaths=__WORKDIR__/output __RUNTIME_DIR__
 
 # Log rotation is handled by journald; the application also rotates its own
 # file log at 10 MB with five backups.

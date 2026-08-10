@@ -41,6 +41,56 @@ remove the shadowing one if they find it.
 
 ---
 
+## Upgrades: stale code and stale processes
+
+Two failures look like bugs but are upgrade artifacts.
+
+**Unzipping over an existing checkout leaves deleted files behind.** An archive
+overwrites changed files but never removes files deleted upstream, so retired
+modules and retired tests survive and keep getting imported. Use the upgrade
+script, which mirrors the release and applies deletions while preserving your
+virtualenv, `output/` tree, local `config.json` and `.git/`:
+
+```bash
+scripts/sync-upgrade.sh ~/Downloads/webosint-pro-v2.zip --dry-run   # preview
+scripts/sync-upgrade.sh ~/Downloads/webosint-pro-v2.zip             # apply
+```
+
+It needs only `python3` and `unzip`.
+
+**A running service keeps executing the code it loaded at start.** Upgrading
+files on disk changes nothing for a live process, and if the checkout directory
+was moved or replaced, the process's working directory no longer exists, so
+every relative path fails:
+
+```
+FileNotFoundError: [Errno 2] No such file or directory: 'reports'
+```
+
+A relative `reports/` or `reports/web` path in a traceback always means old
+code: current code resolves report paths through `core.paths`, which are
+absolute. Confirm the process is stale, then restart it:
+
+```bash
+systemctl show -p MainPID --value webosint
+ps -o pid,lstart,cwd -p "$(systemctl show -p MainPID --value webosint)"
+sudo systemctl restart webosint
+```
+
+A `cwd` ending in `(deleted)` is conclusive. After a restart the PID must
+change. Reports written before the upgrade are unrecoverable if the old
+directory was removed, and the job list lives in memory so it does not survive
+a restart either; run a fresh scan.
+
+If the virtualenv was moved or recreated at a different path, reinstall the
+unit so `ExecStart` points at the interpreter that actually exists:
+
+```bash
+source venv/bin/activate
+sudo -E ./scripts/install-service.sh --lan
+```
+
+
 ## Tests fail after upgrading in place
 
 **Symptom:** failures such as
