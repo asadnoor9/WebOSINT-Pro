@@ -38,3 +38,5 @@
 /files
 /static
 /media
+/student
+/portal
